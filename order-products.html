@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Management | Dōmochi CMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --brand-primary: #DF4F53; 
+            --brand-secondary: #FDEEDC; 
+            --text-main: #4A3B32; 
+            --bg-admin: #F8F9FA;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-admin); color: var(--text-main); padding-bottom: 50px; }
+
+        /* --- Header --- */
+        .page-header { background: var(--white); padding: 20px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 20px; }
+        .back-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #eee; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition); color: var(--text-main); text-decoration: none;}
+        .back-btn:hover { background: var(--brand-primary); color: white; }
+        .page-title h1 { font-size: 1.3rem; font-weight: 800; color: var(--brand-primary); }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+
+        /* --- 分类选项卡 --- */
+        .category-tabs { display: flex; background: white; padding: 8px; border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 30px; gap: 5px; }
+        .tab-btn { flex: 1; padding: 15px; border: none; border-radius: 14px; background: transparent; cursor: pointer; font-weight: 700; font-size: 0.9rem; transition: var(--transition); color: #888; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .tab-btn.active { background: var(--brand-primary); color: white; box-shadow: 0 5px 15px rgba(223, 79, 83, 0.3); }
+
+        /* --- 添加产品表单 (隐藏式) --- */
+        .form-section { background: white; border-radius: 24px; padding: 30px; box-shadow: var(--shadow); margin-bottom: 30px; display: none; border: 2px solid var(--brand-secondary); }
+        .form-section.active { display: block; animation: slideDown 0.4s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #888; }
+        .form-input { width: 100%; padding: 14px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 1rem; outline: none; }
+        .form-input:focus { border-color: var(--brand-primary); }
+        
+        .btn-row { grid-column: 1 / -1; display: flex; gap: 15px; margin-top: 20px; }
+        .btn-save { background: var(--brand-primary); color: white; border: none; padding: 16px 40px; border-radius: 12px; font-weight: 700; cursor: pointer; flex: 2; }
+        .btn-cancel { background: #eee; color: #666; border: none; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; flex: 1; }
+
+        /* --- 产品列表 --- */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .product-card { background: white; border-radius: 20px; padding: 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; position: relative; }
+        .prod-img { width: 80px; height: 80px; border-radius: 15px; object-fit: cover; background: #eee; }
+        .prod-info { flex: 1; }
+        .prod-info h3 { font-size: 1rem; margin-bottom: 3px; }
+        .prod-info .price { color: var(--brand-primary); font-weight: 800; font-size: 1.1rem; }
+        
+        .stock-toggle { display: flex; align-items: center; gap: 8px; margin-top: 5px; font-size: 0.8rem; font-weight: 700; }
+        .toggle-switch { position: relative; width: 40px; height: 20px; background: #ddd; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .toggle-switch::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
+        .active .toggle-switch { background: #52c41a; }
+        .active .toggle-switch::after { left: 22px; }
+
+        .card-actions { display: flex; flex-direction: column; gap: 5px; }
+        .action-btn { background: #f8f8f8; border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer; color: #888; transition: 0.2s; }
+        .action-btn:hover { background: var(--brand-secondary); color: var(--brand-primary); }
+
+        #add-trigger-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: var(--brand-primary); color: white; border: none; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(223, 79, 83, 0.4); cursor: pointer; z-index: 200; transition: var(--transition); }
+        #add-trigger-btn:hover { transform: rotate(90deg) scale(1.1); }
+    </style>
+</head>
+<body>
+
+    <header class="page-header">
+        <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title">
+            <h1>Product Management</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- 分类导航 -->
+        <nav class="category-tabs">
+            <button class="tab-btn active" onclick="switchCategory('mochi', this)">
+                <i class="fa-solid fa-cookie"></i> MOCHI
+            </button>
+            <button class="tab-btn" onclick="switchCategory('drinks', this)">
+                <i class="fa-solid fa-mug-hot"></i> DRINKS
+            </button>
+            <button class="tab-btn" onclick="switchCategory('desserts', this)">
+                <i class="fa-solid fa-ice-cream"></i> DESSERTS & ICE
+            </button>
+        </nav>
+
+        <!-- 添加产品表单 -->
+        <section class="form-section" id="product-form-container">
+            <h2 id="form-title" style="margin-bottom:20px;">Nuovo Prodotto</h2>
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label>Immagine Prodotto (图片)</label>
+                    <input type="file" id="prod-file" accept="image/*" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Nome (Italiano)</label>
+                    <input type="text" id="name_it" class="form-input" placeholder="es. Mochi al Cacao">
+                </div>
+                <div class="form-group">
+                    <label>Name (English)</label>
+                    <input type="text" id="name_en" class="form-input" placeholder="e.g. Cocoa Mochi">
+                </div>
+                <div class="form-group">
+                    <label>Prezzo (€ 价格)</label>
+                    <input type="number" id="price" step="0.1" class="form-input" placeholder="4.50">
+                </div>
+                <div class="form-group">
+                    <label>Sottocategoria (子分类)</label>
+                    <select id="subcategory" class="form-input">
+                        <!-- 动态变动 -->
+                    </select>
+                </div>
+                <div class="form-group full" style="grid-column: 1/-1;">
+                    <label>Descrizione (描述 - 可选)</label>
+                    <textarea id="desc_it" class="form-input" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn-save" onclick="handleSaveProduct()">SALVA PRODOTTO</button>
+                <button class="btn-cancel" onclick="toggleForm(false)">ANNULLA</button>
+            </div>
+        </section>
+
+        <!-- 产品展示列表 -->
+        <div class="product-grid" id="product-list">
+            <!-- 动态加载 -->
+        </div>
+    </main>
+
+    <button id="add-trigger-btn" onclick="toggleForm(true)"><i class="fa-solid fa-plus"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://thulheyvwmfwfhhfjktk.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentCategory = 'mochi';
+        let currentEditId = null;
+
+        const subCats = {
+            mochi: ['Classic', 'Special', 'Box Set'],
+            drinks: ['Milk Tea', 'Fruit Tea', 'Coffee', 'Frappuccino'],
+            desserts: ['Snow Ice', 'Gelato', 'Cakes']
+        };
+
+        window.onload = () => {
+            if (!sessionStorage.getItem('domochi_admin')) window.location.href = 'index.html';
+            fetchProducts();
+            updateSubCatOptions();
+        };
+
+        function switchCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateSubCatOptions();
+            fetchProducts();
+        }
+
+        function updateSubCatOptions() {
+            const select = document.getElementById('subcategory');
+            select.innerHTML = subCats[currentCategory].map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        function toggleForm(show) {
+            const container = document.getElementById('product-form-container');
+            container.classList.toggle('active', show);
+            if(!show) {
+                currentEditId = null;
+                document.getElementById('name_it').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('form-title').innerText = "Nuovo Prodotto";
+            }
+        }
+
+        async function fetchProducts() {
+            const container = document.getElementById('product-list');
+            container.innerHTML = '<p>Caricamento...</p>';
+
+            const { data, error } = await supabaseClient
+                .from('domochi_products')
+                .select('*')
+                .eq('category', currentCategory)
+                .order('id', { ascending: false });
+
+            if (data) {
+                container.innerHTML = data.map(p => `
+                    <div class="product-card ${p.is_available ? 'active' : ''}">
+                        <img src="${p.image_url || 'https://via.placeholder.com/80'}" class="prod-img">
+                        <div class="prod-info">
+                            <h3>${p.name_it}</h3>
+                            <p class="price">€ ${parseFloat(p.price).toFixed(2)}</p>
+                            <div class="stock-toggle" onclick="toggleAvailability(${p.id}, ${p.is_available})">
+                                <div class="toggle-switch"></div>
+                                <span>${p.is_available ? 'Disponibile' : 'Esaurito'}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn" onclick="editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="action-btn" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function handleSaveProduct() {
+            const name_it = document.getElementById('name_it').value.trim();
+            const name_en = document.getElementById('name_en').value.trim();
+            const price = document.getElementById('price').value;
+            const subcat = document.getElementById('subcategory').value;
+            const desc = document.getElementById('desc_it').value;
+            const fileInput = document.getElementById('prod-file');
+
+            if(!name_it || !price) return alert("Nome e Prezzo obbligatori!");
+
+            let imgUrl = "";
+            if (fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileName = `prod_${Date.now()}.${file.name.split('.').pop()}`;
+                const { error: uploadError } = await supabaseClient.storage.from('domochi-assets').upload(fileName, file);
+                if (!uploadError) {
+                    imgUrl = supabaseClient.storage.from('domochi-assets').getPublicUrl(fileName).data.publicUrl;
+                }
+            }
+
+            const productData = {
+                name_it, name_en, price, 
+                category: currentCategory,
+                subcategory: subcat,
+                description_it: desc,
+                is_available: true
+            };
+            if(imgUrl) productData.image_url = imgUrl;
+
+            let result;
+            if (currentEditId) {
+                result = await supabaseClient.from('domochi_products').update(productData).eq('id', currentEditId);
+            } else {
+                result = await supabaseClient.from('domochi_products').insert([productData]);
+            }
+
+            if(!result.error) {
+                alert("Salvato!");
+                toggleForm(false);
+                fetchProducts();
+            }
+        }
+
+        async function toggleAvailability(id, currentStatus) {
+            await supabaseClient.from('domochi_products').update({ is_available: !currentStatus }).eq('id', id);
+            fetchProducts();
+        }
+
+        async function deleteProduct(id) {
+            if(!confirm("Eliminare definitivamente?")) return;
+            await supabaseClient.from('domochi_products').delete().eq('id', id);
+            fetchProducts();
+        }
+
+        function editProduct(p) {
+            currentEditId = p.id;
+            document.getElementById('name_it').value = p.name_it;
+            document.getElementById('name_en').value = p.name_en || '';
+            document.getElementById('price').value = p.price;
+            document.getElementById('subcategory').value = p.subcategory;
+            document.getElementById('desc_it').value = p.description_it || '';
+            document.getElementById('form-title').innerText = "Modifica: " + p.name_it;
+            toggleForm(true);
+            window.scrollTo(0,0);
+        }
+    </script>
+</body>
+</html>
