@@ -101,7 +101,7 @@
                 <div class="form-group"><label>Prezzo (€)</label><input type="number" id="price" step="0.1" class="form-input"></div>
                 <div class="form-group"><label>Sottocategoria</label><select id="subcategory" class="form-input"></select></div>
                 
-                <!-- 产品介绍 (新增加项) -->
+                <!-- 产品介绍 -->
                 <div class="form-group" style="grid-column: 1/-1;">
                     <label>Descrizione / Introduzione (Italiano)</label>
                     <textarea id="desc_it" class="form-input" placeholder="es. Mochi artigianale ripieno di crema al pistacchio..."></textarea>
@@ -218,40 +218,37 @@
         }
 
         async function fetchProducts() {
-    // 拉取数据并解构 error
-    const { data, error } = await supabaseClient
-        .from('domochi_products')
-        .select('*')
-        .eq('category', currentCategory)
-        .order('id', { ascending: false });
-    
-    // 1. 拦截错误并在控制台打印，让你一眼看出问题
-    if (error) {
-        console.error("Supabase 获取数据报错:", error);
-        return; 
-    }
+            const { data, error } = await supabaseClient
+                .from('domochi_products')
+                .select('*')
+                .eq('category', currentCategory)
+                .order('id', { ascending: false });
+            
+            if (error) {
+                console.error("Supabase 获取数据报错:", error);
+                return; 
+            }
 
-    const list = document.getElementById('product-list');
-    
-    // 2. 增加 (data || []) 防御机制，确保不会因为空数据崩溃
-    list.innerHTML = (data || []).map(p => `
-        <div class="product-card">
-            <img src="${p.image_url || DEFAULT_LOGO}" class="prod-img">
-            <div class="prod-info">
-                <h3>${p.name_it}</h3>
-                <p class="price">€ ${parseFloat(p.price).toFixed(2)}</p>
-                <div class="stock-toggle ${p.is_available ? 'is-av' : ''}" onclick="updateStock(${p.id}, ${p.is_available})">
-                    <div class="toggle-switch"></div>
-                    <small>${p.is_available ? 'Disponibile' : 'Esaurito'}</small>
+            const list = document.getElementById('product-list');
+            
+            list.innerHTML = (data || []).map(p => `
+                <div class="product-card">
+                    <img src="${p.image_url || DEFAULT_LOGO}" class="prod-img">
+                    <div class="prod-info">
+                        <h3>${p.name_it}</h3>
+                        <p class="price">€ ${parseFloat(p.price).toFixed(2)}</p>
+                        <div class="stock-toggle ${p.is_available ? 'is-av' : ''}" onclick="updateStock(${p.id}, ${p.is_available})">
+                            <div class="toggle-switch"></div>
+                            <small>${p.is_available ? 'Disponibile' : 'Esaurito'}</small>
+                        </div>
+                    </div>
+                    <div class="action-btns">
+                        <button class="icon-btn" onclick='editProduct(${JSON.stringify(p)})'><i class="fa-solid fa-pen"></i></button>
+                        <button class="icon-btn" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
+                    </div>
                 </div>
-            </div>
-            <div class="action-btns">
-                <button class="icon-btn" onclick='editProduct(${JSON.stringify(p)})'><i class="fa-solid fa-pen"></i></button>
-                <button class="icon-btn" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
+            `).join('');
+        }
 
         async function saveProduct() {
             const btn = document.getElementById('btn-save-text');
