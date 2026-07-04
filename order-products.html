@@ -61,7 +61,6 @@
         .prod-info h3 { font-size: 0.95rem; margin-bottom: 2px; }
         .price { color: var(--brand-primary); font-weight: 800; }
         
-        /* 双开关容器 */
         .toggles-wrapper { display: flex; gap: 15px; margin-top: 8px; flex-wrap: wrap; }
         .stock-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .toggle-switch { width: 34px; height: 18px; background: #ddd; border-radius: 20px; position: relative; transition: 0.3s; }
@@ -83,14 +82,12 @@
     </header>
 
     <main class="container">
-        <!-- 分类导航 -->
         <nav class="category-tabs">
             <button class="tab-btn active" onclick="switchCategory('mochi', this)"><i class="fa-solid fa-cookie"></i> MOCHI</button>
             <button class="tab-btn" onclick="switchCategory('drinks', this)"><i class="fa-solid fa-mug-hot"></i> DRINKS</button>
             <button class="tab-btn" onclick="switchCategory('desserts', this)"><i class="fa-solid fa-ice-cream"></i> DESSERTS</button>
         </nav>
 
-        <!-- 编辑/添加表单 -->
         <section class="form-section" id="form-container">
             <h2 id="form-title" style="margin-bottom:20px;">Aggiungi Prodotto</h2>
             <div class="form-grid">
@@ -103,7 +100,6 @@
                 <div class="form-group"><label>Prezzo (€)</label><input type="number" id="price" step="0.1" class="form-input"></div>
                 <div class="form-group"><label>Sottocategoria</label><select id="subcategory" class="form-input"></select></div>
                 
-                <!-- 产品介绍 -->
                 <div class="form-group" style="grid-column: 1/-1;">
                     <label>Descrizione / Introduzione (Italiano)</label>
                     <textarea id="desc_it" class="form-input" placeholder="es. Mochi artigianale ripieno di crema al pistacchio..."></textarea>
@@ -113,7 +109,6 @@
                     <textarea id="desc_en" class="form-input" placeholder="e.g. Handmade mochi filled with pistachio cream..."></textarea>
                 </div>
 
-                <!-- 饮料专用的冷热选项 -->
                 <div class="form-group" id="drink-temp-group" style="display:none; grid-column: 1/-1;">
                     <label>Opzioni Temperatura (冷热选项)</label>
                     <div class="tag-group">
@@ -125,6 +120,20 @@
                             <input type="checkbox" id="tag-cold">
                             <span class="capsule-label">🔵 Freddo (Cold)</span>
                         </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="drink-size-group" style="display:none; grid-column: 1/-1;">
+                    <label>Opzioni Formato (大杯规格支持)</label>
+                    <div class="tag-group" style="align-items: center; gap: 15px;">
+                        <label class="capsule-tag">
+                            <input type="checkbox" id="has-large-size" onchange="document.getElementById('large-price-wrap').style.display = this.checked ? 'inline-flex' : 'none'">
+                            <span class="capsule-label" style="background:#fff0f6; color:#eb2f96; border:1px solid #ffadd2;">🥤 Supporta formato Grande (允许选大杯)</span>
+                        </label>
+                        <div id="large-price-wrap" style="display:none; align-items:center; gap:8px;">
+                            <span style="font-size:0.85rem; font-weight:700; color:#666;">Prezzo Extra Grande (€):</span>
+                            <input type="number" id="large_price" step="0.1" value="1.0" class="form-input" style="width: 80px; padding: 8px;">
+                        </div>
                     </div>
                 </div>
 
@@ -192,7 +201,10 @@
             currentCategory = cat;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            
             document.getElementById('drink-temp-group').style.display = (cat === 'drinks') ? 'block' : 'none';
+            document.getElementById('drink-size-group').style.display = (cat === 'drinks') ? 'block' : 'none';
+            
             updateSubOptions();
             fetchProducts();
         }
@@ -217,6 +229,8 @@
             document.getElementById('desc_en').value = '';
             document.getElementById('prod-file').value = '';
             document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+            document.getElementById('large_price').value = '1.0';
+            document.getElementById('large-price-wrap').style.display = 'none';
         }
 
         async function fetchProducts() {
@@ -234,25 +248,23 @@
             const list = document.getElementById('product-list');
             
             list.innerHTML = (data || []).map(p => {
-                // 防御性赋值，防止数据库刚加字段时 p.is_pos_available 是 undefined
                 const isPos = p.is_pos_available !== false; 
                 const isWeb = p.is_available !== false;
+                const largeBadge = p.has_large ? `<span style="font-size:0.75rem; background:#fff0f6; color:#eb2f96; padding:2px 6px; border-radius:10px; margin-left:5px;">Grande +€${p.large_price||1}</span>` : '';
 
                 return `
                 <div class="product-card">
                     <img src="${p.image_url || DEFAULT_LOGO}" class="prod-img">
                     <div class="prod-info">
-                        <h3>${p.name_it}</h3>
+                        <h3>${p.name_it} ${largeBadge}</h3>
                         <p class="price">€ ${parseFloat(p.price).toFixed(2)}</p>
                         
                         <div class="toggles-wrapper">
-                            <!-- 官网显示开关 -->
                             <div class="stock-toggle ${isWeb ? 'is-av' : ''}" onclick="updateStock(${p.id}, 'is_available', ${isWeb})">
                                 <div class="toggle-switch"></div>
                                 <small>Sito Web: ${isWeb ? 'ON' : 'OFF'}</small>
                             </div>
                             
-                            <!-- 点单页面开关 -->
                             <div class="stock-toggle ${isPos ? 'is-av' : ''}" onclick="updateStock(${p.id}, 'is_pos_available', ${isPos})">
                                 <div class="toggle-switch"></div>
                                 <small>Ordini: ${isPos ? 'ON' : 'OFF'}</small>
@@ -287,8 +299,9 @@
                 is_gluten_free: document.getElementById('tag-gf').checked,
                 is_hot: document.getElementById('tag-hot').checked,
                 is_cold: document.getElementById('tag-cold').checked,
+                has_large: document.getElementById('has-large-size').checked,
+                large_price: parseFloat(document.getElementById('large_price').value) || 1.0,
                 allergens: checkedAllergens.join(','),
-                // 新增时，默认两个平台都上架
                 is_available: true,
                 is_pos_available: true 
             };
@@ -328,10 +341,16 @@
             document.getElementById('desc_it').value = p.description_it || '';
             document.getElementById('desc_en').value = p.description_en || '';
             document.getElementById('subcategory').value = p.subcategory;
+            
             document.getElementById('tag-vegan').checked = p.is_vegan || false;
             document.getElementById('tag-gf').checked = p.is_gluten_free || false;
             document.getElementById('tag-hot').checked = p.is_hot || false;
             document.getElementById('tag-cold').checked = p.is_cold || false;
+            
+            // 恢复大杯选项状态
+            document.getElementById('has-large-size').checked = p.has_large || false;
+            document.getElementById('large_price').value = p.large_price !== undefined ? p.large_price : 1.0;
+            document.getElementById('large-price-wrap').style.display = p.has_large ? 'inline-flex' : 'none';
             
             const pAllergens = p.allergens ? p.allergens.split(',') : [];
             document.querySelectorAll('.allergen-checkbox').forEach(cb => cb.checked = pAllergens.includes(cb.value));
@@ -341,11 +360,9 @@
             window.scrollTo(0,0);
         }
 
-        // 修改更新库存逻辑：接收 field 参数，动态更新对应的列
         async function updateStock(id, field, currentStatus) {
             const updateData = {};
-            updateData[field] = !currentStatus; // 反转状态
-
+            updateData[field] = !currentStatus;
             await supabaseClient.from('domochi_products').update(updateData).eq('id', id);
             fetchProducts();
         }
