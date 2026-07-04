@@ -1,673 +1,232 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-        <!-- 后台管理容器 -->
-    <div id="admin-app" class="hidden"></div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dōmochi CMS | Control Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --brand-primary: #DF4F53; 
+            --brand-secondary: #FDEEDC; 
+            --text-main: #4A3B32; 
+            --bg-admin: #F8F9FA;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-admin); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* --- 登录页面样式 --- */
+        #login-view { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: var(--white); padding: 40px; border-radius: 24px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; border-top: 8px solid var(--brand-primary); }
+        .login-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; border: 4px solid var(--bg-admin); }
+        .login-card h2 { margin-bottom: 10px; font-weight: 800; color: var(--brand-primary); letter-spacing: 1px; }
+        .login-card p { color: #888; font-size: 0.9rem; margin-bottom: 30px; }
+        
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
+        .form-input { width: 100%; padding: 14px 18px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; transition: var(--transition); }
+        .form-input:focus { border-color: var(--brand-primary); background: #fffafa; }
+        .login-btn { width: 100%; padding: 16px; background: var(--brand-primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition); margin-top: 10px; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(223, 79, 83, 0.3); }
+
+        /* --- 导航控制台样式 --- */
+        #dashboard-view { display: none; padding: 40px 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .welcome-text h1 { font-size: 1.8rem; font-weight: 800; color: var(--brand-primary); }
+        .welcome-text p { color: #888; }
+        .logout-btn { padding: 10px 20px; background: #eee; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .logout-btn:hover { background: #e0e0e0; color: var(--brand-primary); }
+
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .nav-card { 
+            background: var(--white); padding: 30px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+            text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px; 
+            transition: var(--transition); border: 2px solid transparent; 
+        }
+        .nav-card:hover { 
+            transform: translateY(-8px); border-color: var(--brand-primary); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06); 
+        }
+        
+        .icon-box { 
+            width: 70px; height: 70px; border-radius: 18px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.8rem; flex-shrink: 0;
+        }
+        .nav-info h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
+        .nav-info p { font-size: 0.85rem; color: #888; line-height: 1.3; }
+
+        /* 不同卡片的图标颜色 */
+        .bg-1 { background: #fff0f0; color: #DF4F53; } /* 基础信息 */
+        .bg-2 { background: #f0f7ff; color: #1890ff; } /* 网页展示 */
+        .bg-3 { background: #f6ffed; color: #52c41a; } /* 点单系统 */
+        .bg-4 { background: #fffbe6; color: #faad14; } /* 成员管理 */
+        .bg-5 { background: #f9f0ff; color: #722ed1; } /* 点单历史 */
+        .bg-6 { background: #feffe6; color: #fa8c16; } /* 热销产品 */
+
+        footer { text-align: center; padding: 40px; color: #bbb; font-size: 0.85rem; }
+
+        @media (max-width: 600px) {
+            .nav-grid { grid-template-columns: 1fr; }
+            .dash-header { flex-direction: column; text-align: center; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 登录视图 -->
+    <div id="login-view">
+        <div class="login-card">
+            <img src="https://i.ibb.co/gMcnX8yj/IMG-0668.jpg" class="login-logo" alt="Domochi">
+            <h2>Dōmochi CMS</h2>
+            <p>Gestione Contenuti e Ordini</p>
+            
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" class="form-input" placeholder="Inserisci username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="form-input" placeholder="••••••••">
+            </div>
+            
+            <button class="login-btn" onclick="handleLogin()">ACCEDI</button>
+            <p id="error-msg" style="color:red; margin-top:15px; display:none;">Credenziali non valide!</p>
+        </div>
+    </div>
+
+    <!-- 2. 导航控制台视图 -->
+    <div id="dashboard-view">
+        <div class="dash-header">
+            <div class="welcome-text">
+                <h1>Ciao, <span id="admin-name">Admin</span>!</h1>
+                <p>Cosa vuoi gestire oggi?</p>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket"></i> Esci (退出)
+            </button>
+        </div>
+
+        <nav class="nav-grid">
+            <!-- 基础信息 -->
+            <a href="info.html" class="nav-card">
+                <div class="icon-box bg-1"><i class="fa-solid fa-circle-info"></i></div>
+                <div class="nav-info">
+                    <h3>Base Info</h3>
+                    <p>营业时间、通知公告、联系电话及基础地址设置。</p>
+                </div>
+            </a>
+
+            <!-- 网页产品展示 -->
+            <a href="web-products.html" class="nav-card">
+                <div class="icon-box bg-2"><i class="fa-solid fa-pager"></i></div>
+                <div class="nav-info">
+                    <h3>Web Display</h3>
+                    <p>管理主页轮播图及展示类产品的图片和介绍。</p>
+                </div>
+            </a>
+
+            <!-- 点单系统产品管理 -->
+            <a href="order-products.html" class="nav-card">
+                <div class="icon-box bg-3"><i class="fa-solid fa-utensils"></i></div>
+                <div class="nav-info">
+                    <h3>Menu Management</h3>
+                    <p>点单系统菜品增删改查、库存状态及价格调整。</p>
+                </div>
+            </a>
+
+            <!-- 成员管理 -->
+            <a href="staff.html" class="nav-card">
+                <div class="icon-box bg-4"><i class="fa-solid fa-user-shield"></i></div>
+                <div class="nav-info">
+                    <h3>Staff Control</h3>
+                    <p>管理后台管理员账号、权限分配及密码修改。</p>
+                </div>
+            </a>
+
+            <!-- 点单历史 -->
+            <a href="history.html" class="nav-card">
+                <div class="icon-box bg-5"><i class="fa-solid fa-receipt"></i></div>
+                <div class="nav-info">
+                    <h3>Order History</h3>
+                    <p>查看所有历史点单记录，导出数据及详细对账。</p>
+                </div>
+            </a>
+
+            <!-- 热销产品 -->
+            <a href="hot-sales.html" class="nav-card">
+                <div class="icon-box bg-6"><i class="fa-solid fa-fire"></i></div>
+                <div class="nav-info">
+                    <h3>Hot Sales</h3>
+                    <p>数据统计报表，查看最受欢迎的麻薯和饮品排行。</p>
+                </div>
+            </a>
+        </nav>
+
+        <footer>
+            &copy; 2026 Dōmochi Milano | CMS Dashboard v2.0
+        </footer>
+    </div>
 
     <!-- 引入 Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script>
-        // ==================== 1. Supabase 配置 ====================
         const SUPABASE_URL = "https://thulheyvwmfwfhhfjktk.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentLang = localStorage.getItem('domochi_lang') || 'it';
-        let currentEditProductId = null; 
-
-        // 后台子分类数据映射
-        const subcategoriesMap = {
-            'mochi': [{val: 'mochi_classic', txt: 'Mochi Classico'}],
-            'drinks': [
-                {val: 'milk_tea', txt: 'Milk Tea'}, 
-                {val: 'coffee', txt: 'Coffee'}, 
-                {val: 'fruit_tea', txt: 'Fruit Tea'}, 
-                {val: 'frappuccino', txt: 'Frappuccino'}
-            ],
-            'desserts': [
-                {val: 'snow_ice', txt: 'Snow Ice (绵绵冰)'},
-                {val: 'dorayaki', txt: 'Dorayaki (铜锣烧)'},
-                {val: 'mochi_gelato', txt: 'Mochi Gelato (冰淇淋大福)'}
-            ]
-        };
-
-        const i18n = {
-            'it': {
-                'nav-mochi': '<i class="fa-solid fa-cookie-bite"></i> Sfoglia il Nostro Mochi →',
-                'nav-drinks': '<i class="fa-solid fa-mug-hot"></i> Menu Bevande →',
-                'nav-desserts': '<i class="fa-solid fa-ice-cream"></i> Desserts & Ice →',
-                'title-hours': 'Orario di apertura',
-                'btn-glovo': '<i class="fa-solid fa-bag-shopping"></i> Ordina su Glovo',
-                'btn-mochi2': '<i class="fa-solid fa-list-ul"></i> Vedi il Menu Mochi →',
-                'btn-drinks2': '<i class="fa-solid fa-mug-hot"></i> Vedi il Menu Bevande →',
-                'title-contact': 'Contatti & Indirizzo',
-                'label-addr': 'Indirizzo:',
-                'label-tel': 'Telefono:',
-                'btn-map': '<i class="fa-solid fa-map-location-dot"></i> Apri Mappe / Naviga',
-                'footer-rights': '© 2026 Dōmochi Milano. Tutti i diritti riservati.',
-                'footer-zero1': 'Sito realizzato da Zero1 Studio'
-            },
-            'en': {
-                'nav-mochi': '<i class="fa-solid fa-cookie-bite"></i> Our Mochi Menu →',
-                'nav-drinks': '<i class="fa-solid fa-mug-hot"></i> Drinks Menu →',
-                'nav-desserts': '<i class="fa-solid fa-ice-cream"></i> Desserts & Ice →',
-                'title-hours': 'Opening Hours',
-                'btn-glovo': '<i class="fa-solid fa-bag-shopping"></i> Order on Glovo',
-                'btn-mochi2': '<i class="fa-solid fa-list-ul"></i> View Mochi Menu →',
-                'btn-drinks2': '<i class="fa-solid fa-mug-hot"></i> View Drinks Menu →',
-                'title-contact': 'Contact & Address',
-                'label-addr': 'Address:',
-                'label-tel': 'Phone:',
-                'btn-map': '<i class="fa-solid fa-map-location-dot"></i> Open Maps / Navigate',
-                'footer-rights': '© 2026 Dōmochi Milano. All rights reserved.',
-                'footer-zero1': 'Website by Zero1 Studio'
+        // 检查登录状态
+        window.onload = () => {
+            const user = sessionStorage.getItem('domochi_admin');
+            if (user) {
+                showDashboard(user);
             }
         };
-
-        function changeLanguage(lang) {
-            currentLang = lang;
-            localStorage.setItem('domochi_lang', lang);
-            updateLangUI();
-            loadPublicData(); 
-        }
-
-        function updateLangUI() {
-            document.getElementById('btn-it').className = (currentLang === 'it' ? 'lang-btn active' : 'lang-btn');
-            document.getElementById('btn-en').className = (currentLang === 'en' ? 'lang-btn active' : 'lang-btn');
-
-            for (let key in i18n[currentLang]) {
-                let element = document.getElementById('i18n-' + key);
-                if (element) element.innerHTML = i18n[currentLang][key];
-            }
-
-            const pageLinks = [
-                { id: 'i18n-nav-mochi', base: 'mochi.html' },
-                { id: 'i18n-nav-drinks', base: 'drinks.html' },
-                { id: 'i18n-nav-desserts', base: 'desserts.html' },
-                { id: 'i18n-btn-mochi2', base: 'mochi.html' },
-                { id: 'i18n-btn-drinks2', base: 'drinks.html' }
-            ];
-
-            pageLinks.forEach(item => {
-                let el = document.getElementById(item.id);
-                if (el) el.setAttribute('href', `${item.base}?lang=${currentLang}`);
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const langParam = urlParams.get('lang');
-            if (langParam && (langParam === 'it' || langParam === 'en')) {
-                currentLang = langParam;
-                localStorage.setItem('domochi_lang', langParam);
-            }
-            updateLangUI();
-
-            const isManageDomain = window.location.hostname === 'manage.domochi.it';
-            const isLoginSessionActive = sessionStorage.getItem('domochi_session') === 'active';
-
-            if (isManageDomain) {
-                document.getElementById('public-app').classList.add('hidden');
-                document.getElementById('admin-app').classList.remove('hidden');
-                if (isLoginSessionActive) renderAdminDashboard();
-                else renderLoginForm();
-            } else {
-                initPublicPage();
-            }
-        });
-
-        // ==================== 3. 主页数据加载 ====================
-        async function initPublicPage() {
-            await loadPublicData();
-            await loadPublicPromos();
-        }
-
-        async function loadPublicPromos() {
-            const { data } = await supabaseClient.from('domochi_promos').select('*').eq('is_active', true).order('id', { ascending: false });
-            const wrapper = document.getElementById('sliderWrapper');
-            const dotsContainer = document.getElementById('sliderDots');
-            if (!wrapper || !data || data.length === 0) return;
-
-            wrapper.innerHTML = '';
-            dotsContainer.innerHTML = '';
-            
-            data.forEach((promo, i) => {
-                wrapper.innerHTML += `
-                    <a href="${promo.link_url}?lang=${currentLang}" class="slide-item">
-                        <img src="${promo.image_url}" alt="${promo.title}">
-                        <div class="slide-info-overlay">
-                            <span class="slide-tag">${promo.tag_text}</span>
-                            <span class="slide-title">${promo.title}</span>
-                            <span class="slide-sub">${promo.subtitle || ''}</span>
-                        </div>
-                    </a>`;
-                const dot = document.createElement('div');
-                dot.className = i === 0 ? 'dot active' : 'dot';
-                dot.onclick = () => window.goToSlide(i);
-                dotsContainer.appendChild(dot);
-            });
-
-            const slides = document.querySelectorAll('.slide-item');
-            const dots = document.querySelectorAll('.dot');
-            let currentIndex = 0;
-            
-            window.goToSlide = function(index) {
-                currentIndex = (index >= slides.length) ? 0 : (index < 0 ? slides.length - 1 : index);
-                wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
-                dots.forEach(d => d.classList.remove('active'));
-                if(dots[currentIndex]) dots[currentIndex].classList.add('active');
-            }
-            if(window.sliderTimer) clearInterval(window.sliderTimer);
-            window.sliderTimer = setInterval(() => window.goToSlide(currentIndex + 1), 3500);
-        }
-
-        async function loadPublicData() {
-            try {
-                const { data: settings } = await supabaseClient.from('domochi_settings').select('*');
-                if (settings) {
-                    const getVal = (key) => { 
-                        const s = settings.find(x => x.setting_key === key); 
-                        return s ? (currentLang === 'en' ? (s.value_en || s.value_it) : s.value_it) : ''; 
-                    };
-                    
-                    const footerMsg = getVal('footer_notice');
-                    const customHours = getVal('custom_hours'); 
-
-                    if(footerMsg) document.getElementById('live-activity').innerText = footerMsg;
-                    if(customHours) {
-                        const hoursHtml = customHours.replace(/\n/g, '<br>');
-                        document.querySelector('.info-block div').innerHTML = `
-                            <h3><i class="fa-regular fa-clock"></i> <span id="i18n-title-hours">${i18n[currentLang]['title-hours']}</span></h3>
-                            <p style="display:block; padding:15px; background:rgba(255,255,255,0.7); line-height:1.8;">${hoursHtml}</p>
-                        `;
-                    }
-                }
-            } catch (err) { console.warn("Failed loading CMS settings"); }
-        }
-
-        // ==================== 4. 后台登录模块 ====================
-        function renderLoginForm() {
-            const adminApp = document.getElementById('admin-app');
-            adminApp.innerHTML = `
-                <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:#faf9f6; font-family:-apple-system,sans-serif; padding: 20px;">
-                    <div style="background:white; padding:30px; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.08); width:100%; max-width:400px; border-top:6px solid #DF4F53;">
-                        <div style="text-align:center; margin-bottom: 25px;">
-                            <img src="https://i.ibb.co/gMcnX8yj/IMG-0668.jpg" alt="Logo" style="width: 90px; height: 90px; border-radius: 50%; border: 4px solid #f8f8f8; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                        </div>
-                        <h3 style="text-align:center; margin-bottom:25px; color:#4A3B32; font-weight:700;">DOMOCHI CMS</h3>
-                        <div style="margin-bottom:20px;">
-                            <label style="display:block; font-size:0.9rem; color:#666; margin-bottom:8px;">Username</label>
-                            <input type="text" id="login-user" style="width:100%; padding:14px; border:1px solid #ddd; border-radius:12px; font-size:16px;">
-                        </div>
-                        <div style="margin-bottom:25px; position: relative;">
-                            <label style="display:block; font-size:0.9rem; color:#666; margin-bottom:8px;">Password</label>
-                            <input type="password" id="login-pass" style="width:100%; padding:14px 45px 14px 14px; border:1px solid #ddd; border-radius:12px; font-size:16px;">
-                            <i class="fa-solid fa-eye" id="toggle-pwd-icon" style="position: absolute; right: 15px; bottom: 15px; cursor: pointer; color: #888;" 
-                               onclick="const pwd = document.getElementById('login-pass'); const icon = document.getElementById('toggle-pwd-icon'); if (pwd.type === 'password') { pwd.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); } else { pwd.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }"></i>
-                        </div>
-                        <button onclick="handleLogin()" id="login-btn" style="width:100%; background:#DF4F53; color:white; border:none; padding:16px; border-radius:12px; font-weight:700; font-size:1rem; cursor:pointer;">ACCEDI</button>
-                        <p id="login-error" style="color:#d33515; font-size:0.85rem; text-align:center; margin-top:20px; display:none;">Credenziali errate!</p>
-                    </div>
-                </div>
-            `;
-        }
 
         async function handleLogin() {
-            const user = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pass').value.trim();
-            const errorEl = document.getElementById('login-error');
-            if (!user || !pass) return;
-            
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const err = document.getElementById('error-msg');
+
+            if(!user || !pass) return;
+
             try {
-                const { data } = await supabaseClient.from('domochi_admins').select('*').eq('username', user).eq('password', pass).single();
+                // 在 domochi_admins 表中验证
+                const { data, error } = await supabaseClient
+                    .from('domochi_admins')
+                    .select('*')
+                    .eq('username', user)
+                    .eq('password', pass)
+                    .single();
+
                 if (data) {
-                    sessionStorage.setItem('domochi_session', 'active');
-                    sessionStorage.setItem('admin_user', user);
-                    sessionStorage.setItem('admin_role', data.role || 'editor'); 
-                    renderAdminDashboard();
+                    sessionStorage.setItem('domochi_admin', data.username);
+                    sessionStorage.setItem('domochi_role', data.role);
+                    showDashboard(data.username);
                 } else {
-                    errorEl.style.display = 'block';
+                    err.style.display = 'block';
                 }
-            } catch (err) { errorEl.innerText = "Errore server."; errorEl.style.display = 'block'; }
-        }
-
-        // ==================== 5. 后台控制面板 (增强成员管理与产品列表) ====================
-        function renderAdminDashboard() {
-            const currentAdmin = sessionStorage.getItem('admin_user');
-            const role = sessionStorage.getItem('admin_role');
-            const isSuper = role === 'superadmin';
-
-            const adminApp = document.getElementById('admin-app');
-            adminApp.innerHTML = `
-                <style>
-                    .cms-container { max-width: 1000px; margin: 0 auto; padding: 20px 10px; font-family: -apple-system, sans-serif; color:#4A3B32;}
-                    .cms-header { display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px;}
-                    .cms-tabs { display:flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-                    .cms-tab-btn { padding: 10px 15px; border:none; border-radius: 8px; font-weight: 600; cursor:pointer; background: #f0f0f0; flex-shrink: 0;}
-                    .cms-tab-btn.active { background: #DF4F53; color: white;}
-                    .cms-panel { display:none; background:white; padding:15px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);}
-                    .cms-panel.active { display:block;}
-                    .cms-form-group { margin-bottom: 15px;}
-                    .cms-form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom: 5px; color:#666;}
-                    .cms-input { width:100%; padding: 12px; border:1px solid #ddd; border-radius: 8px; font-size: 16px; margin-top:5px;}
-                    .cms-btn { padding: 14px; border:none; border-radius: 8px; font-weight: bold; cursor:pointer; background:#DF4F53; color:white; width:100%; margin-top:10px;}
-                    .list-card { display:flex; flex-direction:column; gap: 10px; padding: 15px; border:1px solid #eee; border-radius: 12px; background:#faf9f6; margin-bottom:10px;}
-                    .list-img { width: 50px; height: 50px; border-radius: 8px; object-fit:cover; background:#ddd;}
-                    .action-btn { width: 100%; padding: 10px; border:none; border-radius:6px; font-size:0.9rem; cursor:pointer; font-weight:bold; margin-top: 5px;}
-                    .list-info { flex:1; }
-                    .badge { font-size:0.7rem; color:white; padding:3px 6px; border-radius:4px; margin-left:5px;}
-                    
-                    @media (min-width: 600px) {
-                        .list-card { flex-direction: row; align-items: center; }
-                        .action-btn { width: auto; margin-top:0;}
-                        .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-                    }
-                </style>
-
-                <div class="cms-container">
-                    <div class="cms-header">
-                        <h2>🍡 Dōmochi CMS</h2>
-                        <div style="text-align:right;">
-                            <span style="font-size:0.85rem; display:block; color:#888;">Operatore: <b>${currentAdmin}</b> (${role})</span>
-                            <button onclick="handleLogout()" class="action-btn" style="background:#8A7366; color:white; padding:5px 12px; margin-top:5px;">Esci (退出)</button>
-                        </div>
-                    </div>
-
-                    <div class="cms-tabs">
-                        <button class="cms-tab-btn active" onclick="switchTab('products', this)">Prodotti (菜品)</button>
-                        <button class="cms-tab-btn" onclick="switchTab('settings', this)">Base (设置)</button>
-                        <button class="cms-tab-btn" onclick="switchTab('promo', this)">Promo (轮播图)</button>
-                        <button class="cms-tab-btn" onclick="switchTab('staff', this)">Staff (成员管理)</button>
-                    </div>
-
-                    <!-- TAB: 产品管理 -->
-                    <div id="tab-products" class="cms-panel active">
-                        <h3 id="prod-form-title" style="margin-bottom:15px; color:#DF4F53;">Aggiungi Prodotto</h3>
-                        <div style="background:#faf9f6; padding:20px; border-radius:8px; border:1px solid #eee; margin-bottom:20px;">
-                            <div class="grid-2">
-                                <div class="cms-form-group">
-                                    <label>Categoria (主分类)</label>
-                                    <select id="prod-cat" class="cms-input" onchange="updateSubcatDropdown()">
-                                        <option value="mochi">Mochi</option>
-                                        <option value="drinks">Bevande / Drinks</option>
-                                        <option value="desserts">Desserts & Ice</option>
-                                    </select>
-                                </div>
-                                <div class="cms-form-group">
-                                    <label>Sottocategoria (子分类)</label>
-                                    <select id="prod-subcat" class="cms-input"></select>
-                                </div>
-                                <div id="temp-settings" style="display:none; grid-column: 1/-1; margin-bottom:15px;">
-                                    <label>Temperatura (冷热选项)</label>
-                                    <div style="display:flex; gap:15px;">
-                                        <label class="tag-checkbox"><input type="checkbox" id="prod-hot"> 🔴 Hot</label>
-                                        <label class="tag-checkbox"><input type="checkbox" id="prod-cold"> 🔵 Cold</label>
-                                    </div>
-                                </div>
-                                <div class="cms-form-group"><label>Nome (IT)</label><input type="text" id="prod-name-it" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Name (EN)</label><input type="text" id="prod-name-en" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Descrizione (IT)</label><textarea id="prod-desc-it" class="cms-input" rows="3"></textarea></div>
-                                <div class="cms-form-group"><label>Description (EN)</label><textarea id="prod-desc-en" class="cms-input" rows="3"></textarea></div>
-                                <div class="cms-form-group"><label>Ordine (排位 - 数字越小越靠前)</label><input type="number" id="prod-sort" class="cms-input" value="0"></div>
-                            </div>
-                            <div style="margin:15px 0;">
-                                <label>Allergeni (过敏源):</label><br>
-                                <div style="display:flex; flex-wrap:wrap; gap:5px; background:#fff; padding:15px; border-radius:10px; border:1px solid #eee;">
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Glutine"> 🌾 Glutine</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Crostacei"> 🦀 Crostacei</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Uova"> 🥚 Uova</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Pesce"> 🐟 Pesce</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Arachidi"> 🥜 Arachidi</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Soia"> 🫘 Soia</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Latte"> 🥛 Latte</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Frutta a guscio"> 🌰 Frutta a guscio</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Sedano"> 🌿 Sedano</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Senape"> 🟡 Senape</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Sesamo"> 🥯 Sesamo</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Solfiti"> 🧪 Solfiti</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Lupini"> 🌼 Lupini</label>
-                                    <label class="tag-checkbox"><input type="checkbox" class="alg-cb" value="Molluschi"> 🐚 Molluschi</label>
-                                    <label class="tag-checkbox vegan" style="margin-left:10px;"><input type="checkbox" id="prod-vegan"> 🌱 Vegano</label>
-                                    <label class="tag-checkbox" style="background:#eef7f2; border-color:#2E624C; color:#2E624C; font-weight:bold;"><input type="checkbox" class="alg-cb" value="Senza Glutine"> 🌾 Senza Glutine</label>
-                                </div>
-                            </div>
-                            <div class="cms-form-group" style="grid-column:1/-1;"><label>Immagine</label><input type="file" id="prod-img" class="cms-input"></div>
-                            <div style="margin: 15px 0; display:flex; gap:20px;">
-                                <label><input type="checkbox" id="prod-isnew"> Etichetta "Nuovo"</label>
-                                <label><input type="checkbox" id="prod-isav" checked> Online</label>
-                            </div>
-                            <div class="grid-2">
-                                <button class="cms-btn" id="btn-save-prod" onclick="saveProduct()" style="background:#2E624C;">SALVA PRODOTTO</button>
-                                <button class="cms-btn" onclick="resetProductForm()" style="background:#8A7366;">ANNULLA</button>
-                            </div>
-                        </div>
-
-                        <!-- 分类查找筛选器 -->
-                        <div style="margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
-                            <label style="font-weight:bold;">Filtra per Categoria:</label>
-                            <select id="filter-cat" class="cms-input" style="width: auto; margin:0;" onchange="renderFilteredProducts()">
-                                <option value="all">Tutti i prodotti (全部显示)</option>
-                                <option value="mochi">Mochi</option>
-                                <option value="drinks">Bevande / Drinks</option>
-                                <option value="desserts">Desserts & Ice</option>
-                            </select>
-                        </div>
-
-                        <div id="cms-product-list">Caricamento...</div>
-                    </div>
-
-                    <!-- TAB: 设置 -->
-                    <div id="tab-settings" class="cms-panel">
-                        <h3 style="margin-bottom:20px; color:#DF4F53;">Orari e Footer</h3>
-                        <div class="grid-2">
-                            <div class="cms-form-group"><label>Orari (IT)</label><textarea id="set-h-it" class="cms-input" rows="4"></textarea></div>
-                            <div class="cms-form-group"><label>Hours (EN)</label><textarea id="set-h-en" class="cms-input" rows="4"></textarea></div>
-                            <div class="cms-form-group"><label>Annuncio Footer (IT)</label><input type="text" id="set-footer-it" class="cms-input"></div>
-                            <div class="cms-form-group"><label>Annuncio Footer (EN)</label><input type="text" id="set-footer-en" class="cms-input"></div>
-                        </div>
-                        <button class="cms-btn" onclick="saveCMSSettings()">SALVA SETTINGS</button>
-                    </div>
-
-                    <!-- TAB: 轮播图管理 (增强版：支持副标题与笔记修改) -->
-                    <div id="tab-promo" class="cms-panel">
-                        <h3 style="margin-bottom:15px; color:#DF4F53;">Slider Promo</h3>
-                        <div style="background:#faf9f6; padding:20px; border-radius:8px; border:1px solid #eee; margin-bottom:20px;">
-                             <div class="grid-2">
-                                <div class="cms-form-group"><label>Immagine</label><input type="file" id="prm-file-input" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Tag (es. NUOVO)</label><input type="text" id="prm-tag-input" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Titolo (标题)</label><input type="text" id="prm-title-input" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Sottotitolo (副标题/笔记)</label><input type="text" id="prm-sub-input" class="cms-input"></div>
-                             </div>
-                             <button class="cms-btn" onclick="uploadPromo()" style="background:#2E624C;">AGGIUNGI PROMO</button>
-                        </div>
-                        <div id="promo-list-view">Caricamento...</div>
-                    </div>
-
-                    <!-- TAB: 成员管理 -->
-                    <div id="tab-staff" class="cms-panel">
-                        <div class="grid-2">
-                            <div style="background:#faf9f6; padding:20px; border-radius:12px; border:1px solid #eee;">
-                                <h3 style="margin-bottom:15px;">Personale (修改本人密码)</h3>
-                                <div class="cms-form-group"><label>Vecchia Password</label><input type="password" id="my-old-pass" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Nuova Password</label><input type="password" id="my-new-pass" class="cms-input"></div>
-                                <button class="cms-btn" onclick="updateMyPassword()">AGGIORNA PASSWORD</button>
-                            </div>
-
-                            ${isSuper ? `
-                            <div style="background:#faf9f6; padding:20px; border-radius:12px; border:1px solid #eee;">
-                                <h3 style="margin-bottom:15px;">Staff (添加员工)</h3>
-                                <div class="cms-form-group"><label>Username</label><input type="text" id="new-m-usr" class="cms-input"></div>
-                                <div class="cms-form-group"><label>Password Initial</label><input type="password" id="new-m-pwd" class="cms-input"></div>
-                                <div class="cms-form-group">
-                                    <label>Ruolo (权限)</label>
-                                    <select id="new-m-role" class="cms-input"><option value="editor">Editor</option><option value="superadmin">SuperAdmin</option></select>
-                                </div>
-                                <button class="cms-btn" onclick="addNewStaff()" style="background:#2E624C;">AGGIUNGI STAFF</button>
-                            </div>` : ''}
-                        </div>
-
-                        <div style="margin-top:30px;">
-                            <h3>Staff List (员工名单及权限管理)</h3>
-                            <div id="staff-list-container" style="margin-top:15px;">Caricamento...</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            updateSubcatDropdown();
-            fetchCMSSettings();
-            fetchCMSProducts();
-            fetchCMSPromos();
-            fetchStaffList();
-        }
-
-        window.switchTab = function(tabId, btnElement) {
-            document.querySelectorAll('.cms-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.cms-tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            btnElement.classList.add('active');
-        };
-
-        window.updateSubcatDropdown = function() {
-            const mainCat = document.getElementById('prod-cat').value;
-            const subcatSelect = document.getElementById('prod-subcat');
-            if(subcategoriesMap[mainCat]) {
-                subcatSelect.innerHTML = subcategoriesMap[mainCat].map(s => `<option value="${s.val}">${s.txt}</option>`).join('');
-            }
-            document.getElementById('temp-settings').style.display = (mainCat === 'drinks') ? 'block' : 'none';
-        }
-
-        // ==================== 产品列表逻辑 ====================
-        let allProductsCache = [];
-        async function fetchCMSProducts() {
-            const { data } = await supabaseClient.from('domochi_products').select('*').order('sort_order', { ascending: true }).order('id', { ascending: false });
-            allProductsCache = data || [];
-            renderFilteredProducts();
-        }
-        window.renderFilteredProducts = function() {
-            const filterValue = document.getElementById('filter-cat').value;
-            const container = document.getElementById('cms-product-list');
-            const filtered = filterValue === 'all' ? allProductsCache : allProductsCache.filter(p => p.category === filterValue);
-            container.innerHTML = filtered.map(p => `
-                <div class="list-card">
-                    <img src="${p.image_url}" class="list-img">
-                    <div class="list-info">
-                        <b>${p.name_it}</b><br>
-                        <small>${p.category} > ${p.subcategory}</small> | <small style="color:#DF4F53;"><b>排位: ${p.sort_order || 0}</b></small><br>
-                        <span class="badge" style="background:${p.is_available ? '#2E624C' : '#888'}">
-                            ${p.is_available ? 'ONLINE' : 'OFFLINE'}
-                        </span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:5px;">
-                        <button class="action-btn" onclick="editProduct(${p.id})">Edit</button>
-                        <button class="action-btn" style="background:${p.is_available ? '#8A7366' : '#2E624C'}; color:white;" onclick="updateOnlineStatus(${p.id}, ${p.is_available})">
-                            ${p.is_available ? 'Metti Offline' : 'Metti Online'}
-                        </button>
-                        <button class="action-btn" style="background:#DF4F53; color:#fff;" onclick="deleteProduct(${p.id})">Del</button>
-                    </div>
-                </div>`).join('');
-        }
-        window.updateOnlineStatus = async (id, currentStatus) => {
-            const { error } = await supabaseClient.from('domochi_products').update({ is_available: !currentStatus }).eq('id', id);
-            if(error) alert(error.message); else fetchCMSProducts();
-        }
-
-        // --- 员工管理逻辑 ---
-        async function fetchStaffList() {
-            const container = document.getElementById('staff-list-container');
-            if(!container) return;
-            const isSuper = sessionStorage.getItem('admin_role') === 'superadmin';
-            const { data } = await supabaseClient.from('domochi_admins').select('*').order('id', { ascending: true });
-            if(!data) return;
-            container.innerHTML = data.map(m => `
-                <div class="list-card" style="padding:15px;">
-                    <div class="list-info">
-                        <strong>${m.username}</strong> <span class="badge" style="background:${m.role==='superadmin'?'#DF4F53':'#8A7366'}">${m.role}</span>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        ${isSuper && m.username !== 'admin' ? `
-                            <select class="cms-input" style="width:130px; margin:0; padding:5px;" onchange="updateStaffRole(${m.id}, this.value)">
-                                <option value="editor" ${m.role==='editor'?'selected':''}>Editor</option>
-                                <option value="superadmin" ${m.role==='superadmin'?'selected':''}>SuperAdmin</option>
-                            </select>
-                            <button class="action-btn" style="background:#d33515; color:white; margin:0;" onclick="deleteStaff(${m.id})">Elimina</button>
-                        ` : (m.username === 'admin' ? '<i>System Default</i>' : '')}
-                    </div>
-                </div>`).join('');
-        }
-        async function addNewStaff() {
-            const u = document.getElementById('new-m-usr').value.trim();
-            const p = document.getElementById('new-m-pwd').value.trim();
-            const r = document.getElementById('new-m-role').value;
-            if(!u || !p) return alert("Compila i campi!");
-            const { error } = await supabaseClient.from('domochi_admins').insert([{ username: u, password: p, role: r }]);
-            if(error) alert(error.message); else { alert("Staff aggiunto!"); fetchStaffList(); }
-        }
-        window.updateStaffRole = async (id, newRole) => {
-            const { error } = await supabaseClient.from('domochi_admins').update({ role: newRole }).eq('id', id);
-            if(error) alert(error.message); else { alert("Ruolo aggiornato!"); fetchStaffList(); }
-        }
-        window.deleteStaff = async (id) => {
-            if(!confirm("Sicuro?")) return;
-            const { error } = await supabaseClient.from('domochi_admins').delete().eq('id', id);
-            if(error) alert(error.message); else fetchStaffList();
-        }
-        async function updateMyPassword() {
-            const oldP = document.getElementById('my-old-pass').value;
-            const newP = document.getElementById('my-new-pass').value;
-            const user = sessionStorage.getItem('admin_user');
-            const { data } = await supabaseClient.from('domochi_admins').select('*').eq('username', user).eq('password', oldP).single();
-            if(!data) return alert("Vecchia password errata!");
-            const { error } = await supabaseClient.from('domochi_admins').update({ password: newP }).eq('username', user);
-            if(error) alert(error.message); else { alert("Password aggiornata! Effettua nuovamente il login."); handleLogout(); }
-        }
-
-        // --- 基础设置逻辑 ---
-        async function fetchCMSSettings() {
-            const { data } = await supabaseClient.from('domochi_settings').select('*');
-            if(data) {
-                const h = data.find(x => x.setting_key === 'custom_hours');
-                const f = data.find(x => x.setting_key === 'footer_notice');
-                if(h) { document.getElementById('set-h-it').value = h.value_it; document.getElementById('set-h-en').value = h.value_en; }
-                if(f) { document.getElementById('set-footer-it').value = f.value_it; document.getElementById('set-footer-en').value = f.value_en; }
+            } catch (e) {
+                err.style.display = 'block';
+                err.innerText = "Errore di connessione.";
             }
         }
-        async function saveCMSSettings() {
-            await supabaseClient.from('domochi_settings').upsert([
-                { setting_key: 'custom_hours', value_it: document.getElementById('set-h-it').value, value_en: document.getElementById('set-h-en').value },
-                { setting_key: 'footer_notice', value_it: document.getElementById('set-footer-it').value, value_en: document.getElementById('set-footer-en').value }
-            ]);
-            alert("Salvato!");
+
+        function showDashboard(name) {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
+            document.getElementById('admin-name').innerText = name;
         }
 
-        // --- 保存产品逻辑 ---
-async function saveProduct() {
-    const nameIt = document.getElementById('prod-name-it').value.trim();
-    if(!nameIt) return alert("Errore: Il nome è vuoto!");
-
-    // 1. 获取基础数据
-    const payload = {
-        category: document.getElementById('prod-cat').value,
-        subcategory: document.getElementById('prod-subcat').value,
-        name_it: nameIt,
-        name_en: document.getElementById('prod-name-en').value.trim(),
-        description_it: document.getElementById('prod-desc-it').value.trim(),
-        description_en: document.getElementById('prod-desc-en').value.trim(),
-        sort_order: parseInt(document.getElementById('prod-sort').value) || 0,
-        allergens: Array.from(document.querySelectorAll('.alg-cb:checked')).map(cb => cb.value).join(', '),
-        is_vegan: document.getElementById('prod-vegan').checked,
-        is_hot: document.getElementById('prod-hot').checked,
-        is_cold: document.getElementById('prod-cold').checked,
-        is_new: document.getElementById('prod-isnew').checked,
-        is_available: document.getElementById('prod-isav').checked
-    };
-
-    // 2. 打印看看 Payload 到底长什么样
-    console.log("准备发送的 Payload:", JSON.stringify(payload, null, 2));
-
-    try {
-        // 3. 处理图片（如果图片上传有问题，先暂时跳过图片测试）
-        const file = document.getElementById('prod-img').files[0];
-        if (file) {
-            const fname = `item_${Date.now()}.${file.name.split('.').pop()}`;
-            const { error: uploadErr } = await supabaseClient.storage.from('domochi-assets').upload(fname, file);
-            if (uploadErr) throw uploadErr;
-            const { data } = supabaseClient.storage.from('domochi-assets').getPublicUrl(fname);
-            payload.image_url = data.publicUrl;
+        function handleLogout() {
+            sessionStorage.clear();
+            location.reload();
         }
-
-        // 4. 执行插入
-        console.log("开始插入数据库...");
-        const { data, error } = currentEditProductId 
-            ? await supabaseClient.from('domochi_products').update(payload).eq('id', currentEditProductId)
-            : await supabaseClient.from('domochi_products').insert([payload]);
-
-        if (error) {
-            console.error("数据库报错详情:", error);
-            alert("数据库插入失败: " + error.message);
-        } else {
-            alert("✅ 保存成功！");
-            resetProductForm();
-            fetchCMSProducts();
-        }
-    } catch(e) { 
-        alert("系统错误: " + e.message); 
-    }
-}
-
-        window.editProduct = (id) => {
-            currentEditProductId = id;
-            const p = allProductsCache.find(x => x.id === id);
-            document.getElementById('prod-cat').value = p.category;
-            updateSubcatDropdown();
-            document.getElementById('prod-subcat').value = p.subcategory || '';
-            document.getElementById('prod-name-it').value = p.name_it;
-            document.getElementById('prod-name-en').value = p.name_en || '';
-            document.getElementById('prod-desc-it').value = p.description_it || ''; 
-            document.getElementById('prod-desc-en').value = p.description_en || ''; 
-            document.getElementById('prod-sort').value = p.sort_order || 0;
-            document.getElementById('prod-hot').checked = p.is_hot;
-            document.getElementById('prod-cold').checked = p.is_cold;
-            document.getElementById('prod-vegan').checked = p.is_vegan;
-            document.querySelectorAll('.alg-cb').forEach(c => c.checked = p.allergens && p.allergens.includes(c.value));
-            document.getElementById('prod-form-title').innerText = "Modifica: " + p.name_it;
-            window.scrollTo(0,0);
-        };
-
-        window.deleteProduct = async (id) => { if(confirm("Del?")) { await supabaseClient.from('domochi_products').delete().eq('id', id); fetchCMSProducts(); } };
-
-        // --- Promo Slider 逻辑 (更新版：支持 Subtitle 与 实时修改笔记) ---
-        async function fetchCMSPromos() {
-            const { data } = await supabaseClient.from('domochi_promos').select('*').order('id', { ascending: false });
-            document.getElementById('promo-list-view').innerHTML = (data || []).map(p => `
-                <div class="list-card">
-                    <img src="${p.image_url}" class="list-img">
-                    <div style="flex:1;">
-                        <b>${p.title}</b><br>
-                        <input type="text" value="${p.subtitle || ''}" class="cms-input" style="margin:5px 0; padding:5px; height:auto; font-size:0.85rem;" 
-                               placeholder="Modifica Sottotitolo/Nota (回车保存)" onchange="updatePromoNote(${p.id}, this.value)">
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        <button class="action-btn" onclick="togglePromo(${p.id}, ${!p.is_active})">${p.is_active?'Hide':'Show'}</button>
-                        <button class="action-btn" style="background:#DF4F53; color:white;" onclick="delPromo(${p.id})">Del</button>
-                    </div>
-                </div>`).join('');
-        }
-
-        async function uploadPromo() {
-            const f = document.getElementById('prm-file-input').files[0];
-            if(!f) return alert("Select File!");
-            const fname = `prm_${Date.now()}.${f.name.split('.').pop()}`;
-            await supabaseClient.storage.from('domochi-assets').upload(fname, f);
-            const url = supabaseClient.storage.from('domochi-assets').getPublicUrl(fname).data.publicUrl;
-            const payload = { 
-                image_url: url, 
-                title: document.getElementById('prm-title-input').value, 
-                subtitle: document.getElementById('prm-sub-input').value, // 读取副标题
-                tag_text: document.getElementById('prm-tag-input').value, 
-                is_active: true 
-            };
-            await supabaseClient.from('domochi_promos').insert([payload]);
-            alert("Promo OK!"); fetchCMSPromos();
-        }
-
-        window.updatePromoNote = async (id, newNote) => {
-            const { error } = await supabaseClient.from('domochi_promos').update({ subtitle: newNote }).eq('id', id);
-            if(error) alert(error.message); else console.log("Nota salvata.");
-        }
-
-        window.togglePromo = async (id, s) => { await supabaseClient.from('domochi_promos').update({ is_active: s }).eq('id', id); fetchCMSPromos(); };
-        window.delPromo = async (id) => { if(confirm("Del?")) { await supabaseClient.from('domochi_promos').delete().eq('id', id); fetchCMSPromos(); } };
-
-        window.resetProductForm = () => { 
-            currentEditProductId = null; document.getElementById('prod-form-title').innerText="Aggiungi Prodotto"; 
-            document.getElementById('prod-name-it').value=''; document.getElementById('prod-name-en').value=''; 
-            document.getElementById('prod-desc-it').value=''; document.getElementById('prod-desc-en').value=''; 
-            document.getElementById('prod-sort').value='0'; document.getElementById('prod-img').value=''; document.querySelectorAll('input[type="checkbox"]').forEach(c=>c.checked=false); 
-            document.getElementById('prod-isav').checked=true; updateSubcatDropdown(); 
-        };
-
-        window.handleLogout = () => { sessionStorage.clear(); window.location.reload(); }
     </script>
 </body>
 </html>
