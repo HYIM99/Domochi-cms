@@ -37,6 +37,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; color: #888; }
         .form-input { width: 100%; padding: 14px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 1rem; outline: none; }
+        textarea.form-input { min-height: 80px; resize: vertical; }
 
         .tag-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
         .capsule-tag { position: relative; cursor: pointer; }
@@ -80,12 +81,14 @@
     </header>
 
     <main class="container">
+        <!-- 分类导航 -->
         <nav class="category-tabs">
             <button class="tab-btn active" onclick="switchCategory('mochi', this)"><i class="fa-solid fa-cookie"></i> MOCHI</button>
             <button class="tab-btn" onclick="switchCategory('drinks', this)"><i class="fa-solid fa-mug-hot"></i> DRINKS</button>
             <button class="tab-btn" onclick="switchCategory('desserts', this)"><i class="fa-solid fa-ice-cream"></i> DESSERTS</button>
         </nav>
 
+        <!-- 编辑/添加表单 -->
         <section class="form-section" id="form-container">
             <h2 id="form-title" style="margin-bottom:20px;">Aggiungi Prodotto</h2>
             <div class="form-grid">
@@ -93,11 +96,21 @@
                     <label>Immagine (没上传默认显示Logo)</label>
                     <input type="file" id="prod-file" class="form-input">
                 </div>
-                <div class="form-group"><label>Nome (IT)</label><input type="text" id="name_it" class="form-input"></div>
-                <div class="form-group"><label>Name (EN)</label><input type="text" id="name_en" class="form-input"></div>
+                <div class="form-group"><label>Nome (Italiano)</label><input type="text" id="name_it" class="form-input"></div>
+                <div class="form-group"><label>Name (English)</label><input type="text" id="name_en" class="form-input"></div>
                 <div class="form-group"><label>Prezzo (€)</label><input type="number" id="price" step="0.1" class="form-input"></div>
                 <div class="form-group"><label>Sottocategoria</label><select id="subcategory" class="form-input"></select></div>
                 
+                <!-- 产品介绍 (新增加项) -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label>Descrizione / Introduzione (Italiano)</label>
+                    <textarea id="desc_it" class="form-input" placeholder="es. Mochi artigianale ripieno di crema al pistacchio..."></textarea>
+                </div>
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label>Description / Introduction (English)</label>
+                    <textarea id="desc_en" class="form-input" placeholder="e.g. Handmade mochi filled with pistachio cream..."></textarea>
+                </div>
+
                 <!-- 饮料专用的冷热选项 -->
                 <div class="form-group" id="drink-temp-group" style="display:none; grid-column: 1/-1;">
                     <label>Opzioni Temperatura (冷热选项)</label>
@@ -114,7 +127,7 @@
                 </div>
 
                 <div class="form-group" style="grid-column: 1/-1;">
-                    <label>Tags Dietetici (饮食标签)</label>
+                    <label>Tags Dietetici</label>
                     <div class="tag-group">
                         <label class="capsule-tag diet-vegan">
                             <input type="checkbox" id="tag-vegan">
@@ -149,7 +162,7 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const DEFAULT_LOGO = "https://i.ibb.co/gMcnX8yj/IMG-0668.jpg"; // 默认Logo链接
+        const DEFAULT_LOGO = "https://i.ibb.co/gMcnX8yj/IMG-0668.jpg";
 
         let currentCategory = 'mochi';
         let currentEditId = null;
@@ -158,10 +171,11 @@
         const subCats = {
             mochi: ['Classic', 'Special', 'Box Set'],
             drinks: ['Milk Tea', 'Fruit Tea', 'Coffee', 'Frappuccino'],
-            desserts: ['Snow Ice', 'Dorayaki', 'Mochi Gelato']
+            desserts: ['Snow Ice', 'Gelato', 'Cakes']
         };
 
         window.onload = () => {
+            if (!sessionStorage.getItem('domochi_admin')) window.location.href = 'index.html';
             renderAllergenCapsules();
             updateSubOptions();
             fetchProducts();
@@ -176,10 +190,7 @@
             currentCategory = cat;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
-            // 如果是饮料，显示冷热选项
             document.getElementById('drink-temp-group').style.display = (cat === 'drinks') ? 'block' : 'none';
-            
             updateSubOptions();
             fetchProducts();
         }
@@ -200,6 +211,8 @@
             document.getElementById('name_it').value = '';
             document.getElementById('name_en').value = '';
             document.getElementById('price').value = '';
+            document.getElementById('desc_it').value = '';
+            document.getElementById('desc_en').value = '';
             document.getElementById('prod-file').value = '';
             document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
         }
@@ -237,6 +250,8 @@
                 name_it: document.getElementById('name_it').value,
                 name_en: document.getElementById('name_en').value,
                 price: document.getElementById('price').value,
+                description_it: document.getElementById('desc_it').value,
+                description_en: document.getElementById('desc_en').value,
                 subcategory: document.getElementById('subcategory').value,
                 category: currentCategory,
                 is_vegan: document.getElementById('tag-vegan').checked,
@@ -254,26 +269,19 @@
                     const upload = await supabaseClient.storage.from('domochi-assets').upload(path, file);
                     if(upload.error) throw upload.error;
                     productData.image_url = supabaseClient.storage.from('domochi-assets').getPublicUrl(path).data.publicUrl;
-                } else if (!currentEditId) {
-                    // 新增产品且没传图，用默认Logo
-                    productData.image_url = DEFAULT_LOGO;
                 }
 
-                let result;
-                if(currentEditId) {
-                    result = await supabaseClient.from('domochi_products').update(productData).eq('id', currentEditId);
-                } else {
-                    result = await supabaseClient.from('domochi_products').insert([productData]);
+                let res;
+                if(currentEditId) res = await supabaseClient.from('domochi_products').update(productData).eq('id', currentEditId);
+                else {
+                    if(!productData.image_url) productData.image_url = DEFAULT_LOGO;
+                    res = await supabaseClient.from('domochi_products').insert([productData]);
                 }
+                if(res.error) throw res.error;
 
-                if(result.error) throw result.error;
-
-                alert("Salvato con successo!");
-                resetForm();
-                toggleForm(false); 
-                fetchProducts();
+                alert("Salvato!");
+                resetForm(); toggleForm(false); fetchProducts();
             } catch (err) {
-                console.error(err);
                 alert("Errore: " + err.message);
             } finally {
                 btn.innerText = "SALVA";
@@ -286,6 +294,8 @@
             document.getElementById('name_it').value = p.name_it;
             document.getElementById('name_en').value = p.name_en || '';
             document.getElementById('price').value = p.price;
+            document.getElementById('desc_it').value = p.description_it || '';
+            document.getElementById('desc_en').value = p.description_en || '';
             document.getElementById('subcategory').value = p.subcategory;
             document.getElementById('tag-vegan').checked = p.is_vegan || false;
             document.getElementById('tag-gf').checked = p.is_gluten_free || false;
