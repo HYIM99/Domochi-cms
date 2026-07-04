@@ -61,7 +61,9 @@
         .prod-info h3 { font-size: 0.95rem; margin-bottom: 2px; }
         .price { color: var(--brand-primary); font-weight: 800; }
         
-        .stock-toggle { display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer; }
+        /* 双开关容器 */
+        .toggles-wrapper { display: flex; gap: 15px; margin-top: 8px; flex-wrap: wrap; }
+        .stock-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .toggle-switch { width: 34px; height: 18px; background: #ddd; border-radius: 20px; position: relative; transition: 0.3s; }
         .toggle-switch::after { content: ''; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
         .is-av .toggle-switch { background: #52c41a; }
@@ -231,23 +233,39 @@
 
             const list = document.getElementById('product-list');
             
-            list.innerHTML = (data || []).map(p => `
+            list.innerHTML = (data || []).map(p => {
+                // 防御性赋值，防止数据库刚加字段时 p.is_pos_available 是 undefined
+                const isPos = p.is_pos_available !== false; 
+                const isWeb = p.is_available !== false;
+
+                return `
                 <div class="product-card">
                     <img src="${p.image_url || DEFAULT_LOGO}" class="prod-img">
                     <div class="prod-info">
                         <h3>${p.name_it}</h3>
                         <p class="price">€ ${parseFloat(p.price).toFixed(2)}</p>
-                        <div class="stock-toggle ${p.is_available ? 'is-av' : ''}" onclick="updateStock(${p.id}, ${p.is_available})">
-                            <div class="toggle-switch"></div>
-                            <small>${p.is_available ? 'Disponibile' : 'Esaurito'}</small>
+                        
+                        <div class="toggles-wrapper">
+                            <!-- 官网显示开关 -->
+                            <div class="stock-toggle ${isWeb ? 'is-av' : ''}" onclick="updateStock(${p.id}, 'is_available', ${isWeb})">
+                                <div class="toggle-switch"></div>
+                                <small>Sito Web: ${isWeb ? 'ON' : 'OFF'}</small>
+                            </div>
+                            
+                            <!-- 点单页面开关 -->
+                            <div class="stock-toggle ${isPos ? 'is-av' : ''}" onclick="updateStock(${p.id}, 'is_pos_available', ${isPos})">
+                                <div class="toggle-switch"></div>
+                                <small>Ordini: ${isPos ? 'ON' : 'OFF'}</small>
+                            </div>
                         </div>
+
                     </div>
                     <div class="action-btns">
                         <button class="icon-btn" onclick='editProduct(${JSON.stringify(p)})'><i class="fa-solid fa-pen"></i></button>
                         <button class="icon-btn" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         async function saveProduct() {
@@ -270,7 +288,9 @@
                 is_hot: document.getElementById('tag-hot').checked,
                 is_cold: document.getElementById('tag-cold').checked,
                 allergens: checkedAllergens.join(','),
-                is_available: true
+                // 新增时，默认两个平台都上架
+                is_available: true,
+                is_pos_available: true 
             };
 
             try {
@@ -321,8 +341,12 @@
             window.scrollTo(0,0);
         }
 
-        async function updateStock(id, status) {
-            await supabaseClient.from('domochi_products').update({ is_available: !status }).eq('id', id);
+        // 修改更新库存逻辑：接收 field 参数，动态更新对应的列
+        async function updateStock(id, field, currentStatus) {
+            const updateData = {};
+            updateData[field] = !currentStatus; // 反转状态
+
+            await supabaseClient.from('domochi_products').update(updateData).eq('id', id);
             fetchProducts();
         }
 
