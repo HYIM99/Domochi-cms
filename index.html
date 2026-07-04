@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dōmochi CMS | Control Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background:#faf9f6; font-family:-apple-system, sans-serif; padding:20px; color:#4A3B32; }
+        .cms-container { max-width: 1000px; margin: 0 auto; }
+        .cms-card { background:white; padding:25px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-bottom:20px; }
+        .cms-tabs { display:flex; gap:10px; margin-bottom:20px; overflow-x:auto; }
+        .cms-tab-btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; background:#eee; font-weight:600; white-space:nowrap; }
+        .cms-tab-btn.active { background:#DF4F53; color:white; }
+        .cms-panel { display:none; }
+        .cms-panel.active { display:block; }
+        .cms-input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-top:5px; margin-bottom:15px; font-size:16px; box-sizing:border-box; }
+        .cms-btn { padding:14px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; background:#DF4F53; color:white; width:100%; transition: opacity 0.2s; }
+        .list-card { display:flex; align-items:center; gap:15px; padding:15px; border:1px solid #eee; border-radius:12px; margin-bottom:10px; background:#fff; }
+        .list-img { width:60px; height:60px; border-radius:8px; object-fit:cover; }
+        .action-btn { padding:6px 12px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; }
+        .tag-checkbox { display:inline-flex; align-items:center; gap:5px; background:#f5f5f5; padding:5px 10px; border-radius:20px; font-size:0.8rem; margin:2px; border:1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <div id="admin-app"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://thulheyvwmfwfhhfjktk.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const subMap = { 'mochi':[{val:'mochi_classic',txt:'Classic'}], 'drinks':[{val:'milk_tea',txt:'Milk Tea'},{val:'coffee',txt:'Coffee'}], 'desserts':[{val:'snow_ice',txt:'Snow Ice'}] };
+        let allProds = [];
+        let currentEditId = null;
+
+        function init() {
+            if (sessionStorage.getItem('domochi_session') === 'active') renderDashboard();
+            else renderLogin();
+        }
+
+        function renderLogin() {
+            document.getElementById('admin-app').innerHTML = `<div style="max-width:400px; margin:100px auto" class="cms-card">
+                <h2 style="text-align:center">DOMOCHI CMS</h2>
+                <input type="text" id="user" class="cms-input" placeholder="User">
+                <input type="password" id="pass" class="cms-input" placeholder="Pass">
+                <button onclick="login()" class="cms-btn">ACCEDI</button>
+            </div>`;
+        }
+
+        async function login() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const { data } = await supabaseClient.from('domochi_admins').select('*').eq('username', u).eq('password', p).single();
+            if(data) {
+                sessionStorage.setItem('domochi_session', 'active');
+                sessionStorage.setItem('admin_user', u);
+                sessionStorage.setItem('admin_role', data.role);
+                renderDashboard();
+            } else alert("Error");
+        }
+
+        function renderDashboard() {
+            const role = sessionStorage.getItem('admin_role');
+            document.getElementById('admin-app').innerHTML = `
+                <div class="cms-container">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <h2>🍡 CMS Dashboard</h2>
+                        <button onclick="sessionStorage.clear();location.reload()" style="background:#888; color:white" class="action-btn">Esci</button>
+                    </div>
+                    <div class="cms-tabs">
+                        <button class="cms-tab-btn active" onclick="switchTab('prods', this)">Prodotti</button>
+                        <button class="cms-tab-btn" onclick="switchTab('sets', this)">Settings</button>
+                        <button class="cms-tab-btn" onclick="switchTab('prm', this)">Promo</button>
+                        ${role==='superadmin'?'<button class="cms-tab-btn" onclick="switchTab('stf', this)">Staff</button>':''}
+                    </div>
+
+                    <div id="p-prods" class="cms-panel active">
+                        <div class="cms-card">
+                            <h3 id="f-title">Add Prodotto</h3>
+                            <select id="p-cat" class="cms-input" onchange="updateSub()"><option value="mochi">Mochi</option><option value="drinks">Drinks</option><option value="desserts">Desserts</option></select>
+                            <select id="p-sub" class="cms-input"></select>
+                            <input id="p-n-it" class="cms-input" placeholder="Nome IT">
+                            <input id="p-n-en" class="cms-input" placeholder="Name EN">
+                            <input type="file" id="p-img" class="cms-input">
+                            <button onclick="saveProd()" class="cms-btn">SALVA</button>
+                        </div>
+                        <div id="prod-list"></div>
+                    </div>
+
+                    <div id="p-sets" class="cms-panel">
+                        <div class="cms-card">
+                            <h3>Orari</h3>
+                            <textarea id="s-h-it" class="cms-input" rows="5"></textarea>
+                            <button onclick="saveSets()" class="cms-btn">UPDATE</button>
+                        </div>
+                    </div>
+                    
+                    <div id="p-prm" class="cms-panel">
+                        <div class="cms-card">
+                            <input id="pr-t" class="cms-input" placeholder="Title">
+                            <input type="file" id="pr-i" class="cms-input">
+                            <button onclick="addPromo()" class="cms-btn">ADD PROMO</button>
+                        </div>
+                        <div id="promo-list"></div>
+                    </div>
+
+                    <div id="p-stf" class="cms-panel">
+                        <div id="staff-list"></div>
+                    </div>
+                </div>`;
+            updateSub(); fetchCMS();
+        }
+
+        function switchTab(id, btn) {
+            document.querySelectorAll('.cms-panel').forEach(p=>p.classList.remove('active'));
+            document.querySelectorAll('.cms-tab-btn').forEach(b=>b.classList.remove('active'));
+            document.getElementById('p-'+id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function updateSub() {
+            const c = document.getElementById('p-cat').value;
+            document.getElementById('p-sub').innerHTML = subMap[c].map(s=>`<option value="${s.val}">${s.txt}</option>`).join('');
+        }
+
+        async function fetchCMS() {
+            const { data: ps } = await supabaseClient.from('domochi_products').select('*').order('id',{ascending:false});
+            allProds = ps || [];
+            document.getElementById('prod-list').innerHTML = allProds.map(p=>`
+                <div class="list-card">
+                    <img src="${p.image_url}" class="list-img">
+                    <div style="flex:1"><b>${p.name_it}</b><br><small>${p.category}</small></div>
+                    <button class="action-btn" onclick="editP(${p.id})">Edit</button>
+                    <button class="action-btn" style="background:red;color:white" onclick="delP(${p.id})">Del</button>
+                </div>`).join('');
+        }
+
+        async function saveProd() {
+            const payload = {
+                category: document.getElementById('p-cat').value,
+                subcategory: document.getElementById('p-sub').value,
+                name_it: document.getElementById('p-n-it').value,
+                name_en: document.getElementById('p-n-en').value,
+                is_available: true
+            };
+            const f = document.getElementById('p-img').files[0];
+            if(f) {
+                const path = `item_${Date.now()}`;
+                await supabaseClient.storage.from('domochi-assets').upload(path, f);
+                payload.image_url = supabaseClient.storage.from('domochi-assets').getPublicUrl(path).data.publicUrl;
+            }
+            if(currentEditId) await supabaseClient.from('domochi_products').update(payload).eq('id', currentEditId);
+            else await supabaseClient.from('domochi_products').insert([payload]);
+            location.reload();
+        }
+
+        window.delP = async (id) => { if(confirm("Del?")) { await supabaseClient.from('domochi_products').delete().eq('id',id); fetchCMS(); } };
+        init();
+    </script>
+</body>
+</html>
