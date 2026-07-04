@@ -287,10 +287,14 @@
 
             const checkedAllergens = Array.from(document.querySelectorAll('.allergen-checkbox:checked')).map(c => c.value);
             
+            // 核心修复：如果留空，强制转换为 0，杜绝 invalid input syntax 错误！
+            const rawPrice = document.getElementById('price').value;
+            const rawLargePrice = document.getElementById('large_price').value;
+
             const productData = {
                 name_it: document.getElementById('name_it').value,
                 name_en: document.getElementById('name_en').value,
-                price: document.getElementById('price').value,
+                price: rawPrice ? parseFloat(rawPrice) : 0, 
                 description_it: document.getElementById('desc_it').value,
                 description_en: document.getElementById('desc_en').value,
                 subcategory: document.getElementById('subcategory').value,
@@ -300,7 +304,7 @@
                 is_hot: document.getElementById('tag-hot').checked,
                 is_cold: document.getElementById('tag-cold').checked,
                 has_large: document.getElementById('has-large-size').checked,
-                large_price: parseFloat(document.getElementById('large_price').value) || 1.0,
+                large_price: rawLargePrice ? parseFloat(rawLargePrice) : 1.0,
                 allergens: checkedAllergens.join(','),
                 is_available: true,
                 is_pos_available: true 
@@ -347,7 +351,6 @@
             document.getElementById('tag-hot').checked = p.is_hot || false;
             document.getElementById('tag-cold').checked = p.is_cold || false;
             
-            // 恢复大杯选项状态
             document.getElementById('has-large-size').checked = p.has_large || false;
             document.getElementById('large_price').value = p.large_price !== undefined ? p.large_price : 1.0;
             document.getElementById('large-price-wrap').style.display = p.has_large ? 'inline-flex' : 'none';
