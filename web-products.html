@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Display | Dōmochi CMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --brand-primary: #DF4F53; 
+            --brand-secondary: #FDEEDC; 
+            --text-main: #4A3B32; 
+            --bg-admin: #F8F9FA;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-admin); color: var(--text-main); padding-bottom: 50px; }
+
+        /* --- Header --- */
+        .page-header { background: var(--white); padding: 20px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 20px; }
+        .back-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #eee; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition); color: var(--text-main); text-decoration: none;}
+        .back-btn:hover { background: var(--brand-primary); color: white; }
+        .page-title h1 { font-size: 1.3rem; font-weight: 800; color: var(--brand-primary); }
+
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+
+        /* --- 表单卡片 --- */
+        .cms-card { background: var(--white); padding: 25px; border-radius: 24px; box-shadow: var(--shadow); margin-bottom: 30px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--brand-secondary); padding-bottom: 15px; }
+        .card-header h2 { font-size: 1.1rem; font-weight: 800; color: var(--brand-primary); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #888; }
+        .form-input { width: 100%; padding: 12px; border: 2px solid #f0f0f0; border-radius: 10px; font-size: 0.9rem; outline: none; }
+        .form-input:focus { border-color: var(--brand-primary); }
+
+        .btn-add { background: var(--brand-primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: var(--transition); margin-top: 10px; width: 100%; }
+        .btn-add:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        /* --- 轮播图列表 --- */
+        .promo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .promo-item { background: white; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; position: relative; }
+        .promo-img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
+        .promo-info { padding: 15px; }
+        .promo-info h3 { font-size: 1rem; margin-bottom: 5px; }
+        .promo-info p { font-size: 0.8rem; color: #999; margin-bottom: 10px; }
+        
+        .promo-status { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; color: white; }
+        .status-active { background: #52c41a; }
+        .status-hidden { background: #888; }
+
+        .promo-actions { display: flex; gap: 10px; padding: 0 15px 15px; }
+        .action-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: var(--transition); }
+        .btn-toggle { background: #eee; color: #4A3B32; }
+        .btn-del { background: #feebeb; color: var(--brand-primary); }
+        .btn-del:hover { background: var(--brand-primary); color: white; }
+
+        #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 10px; color: white; font-weight: 600; display: none; z-index: 1000; }
+
+        /* 文件上传按钮美化 */
+        .file-upload { border: 2px dashed #ddd; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; transition: var(--transition); }
+        .file-upload:hover { border-color: var(--brand-primary); background: #fffafa; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <header class="page-header">
+        <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title">
+            <h1>Web Display Management</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <!-- 1. 添加新轮播图 -->
+        <section class="cms-card">
+            <div class="card-header">
+                <h2>Aggiungi Promo Slider (添加轮播图)</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label>Seleziona Immagine (图片 - 建议 1200x500)</label>
+                    <input type="file" id="promo-file" accept="image/*" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Tag (标签 - 如: Nuovo / Promo)</label>
+                    <input type="text" id="promo-tag" class="form-input" placeholder="es. Nuovo">
+                </div>
+                <div class="form-group">
+                    <label>Titolo (标题)</label>
+                    <input type="text" id="promo-title" class="form-input" placeholder="es. Granita Artigianale">
+                </div>
+                <div class="form-group">
+                    <label>Sottotitolo (副标题)</label>
+                    <input type="text" id="promo-sub" class="form-input" placeholder="新品来袭！">
+                </div>
+                <div class="form-group">
+                    <label>Link URL (跳转页面 - 如: drinks.html)</label>
+                    <input type="text" id="promo-link" class="form-input" placeholder="drinks.html">
+                </div>
+            </div>
+            <button class="btn-add" id="upload-btn" onclick="handleUpload()">
+                <i class="fa-solid fa-cloud-arrow-up"></i> CARICA PROMO (上传并发布)
+            </button>
+        </section>
+
+        <!-- 2. 轮播图列表 -->
+        <section>
+            <div class="card-header">
+                <h2>Slider Attivi (当前轮播列表)</h2>
+            </div>
+            <div class="promo-list" id="promo-container">
+                <!-- 动态加载 -->
+                <p style="color:#aaa;">Caricamento...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://thulheyvwmfwfhhfjktk.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 安全检查
+        if (!sessionStorage.getItem('domochi_admin')) {
+            window.location.href = 'index.html';
+        }
+
+        window.onload = () => {
+            fetchPromos();
+        };
+
+        // 获取轮播图数据
+        async function fetchPromos() {
+            const { data, error } = await supabaseClient
+                .from('domochi_promos')
+                .select('*')
+                .order('id', { ascending: false });
+
+            if (data) {
+                const container = document.getElementById('promo-container');
+                if(data.length === 0) {
+                    container.innerHTML = '<p style="color:#aaa;">Nessuna promo attiva.</p>';
+                    return;
+                }
+                container.innerHTML = data.map(p => `
+                    <div class="promo-item">
+                        <span class="promo-status ${p.is_active ? 'status-active' : 'status-hidden'}">
+                            ${p.is_active ? 'ONLINE' : 'HIDDEN'}
+                        </span>
+                        <img src="${p.image_url}" class="promo-img">
+                        <div class="promo-info">
+                            <h3>${p.title}</h3>
+                            <p>${p.tag_text} | ${p.link_url}</p>
+                        </div>
+                        <div class="promo-actions">
+                            <button class="action-btn btn-toggle" onclick="togglePromo(${p.id}, ${p.is_active})">
+                                <i class="fa-solid fa-eye${p.is_active ? '-slash' : ''}"></i> ${p.is_active ? 'Nascondi' : 'Mostra'}
+                            </button>
+                            <button class="action-btn btn-del" onclick="deletePromo(${p.id})">
+                                <i class="fa-solid fa-trash"></i> Elimina
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 上传新轮播图
+        async function handleUpload() {
+            const fileInput = document.getElementById('promo-file');
+            const title = document.getElementById('promo-title').value.trim();
+            const tag = document.getElementById('promo-tag').value.trim();
+            const sub = document.getElementById('promo-sub').value.trim();
+            const link = document.getElementById('promo-link').value.trim();
+            const btn = document.getElementById('upload-btn');
+
+            if (!fileInput.files[0] || !title) return alert("Inserisci immagine e titolo!");
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento...';
+
+            try {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `promo_${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                // 1. 上传图片到 Storage (使用之前定义的 domochi-assets bucket)
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('domochi-assets')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                // 2. 获取公开 URL
+                const { data: urlData } = supabaseClient.storage
+                    .from('domochi-assets')
+                    .getPublicUrl(filePath);
+
+                // 3. 写入数据库
+                const { error: dbError } = await supabaseClient
+                    .from('domochi_promos')
+                    .insert([{
+                        title: title,
+                        subtitle: sub,
+                        tag_text: tag,
+                        image_url: urlData.publicUrl,
+                        link_url: link || '#',
+                        is_active: true
+                    }]);
+
+                if (dbError) throw dbError;
+
+                showToast("Promo aggiunta!", "#2E624C");
+                location.reload();
+
+            } catch (err) {
+                alert("Errore: " + err.message);
+                btn.disabled = false;
+                btn.innerText = "CARICA PROMO (上传并发布)";
+            }
+        }
+
+        // 切换显示/隐藏
+        async function togglePromo(id, currentStatus) {
+            const { error } = await supabaseClient
+                .from('domochi_promos')
+                .update({ is_active: !currentStatus })
+                .eq('id', id);
+            
+            if(!error) fetchPromos();
+        }
+
+        // 删除
+        async function deletePromo(id) {
+            if(!confirm("Sicuro di voler eliminare questa promo?")) return;
+            const { error } = await supabaseClient
+                .from('domochi_promos')
+                .delete()
+                .eq('id', id);
+            
+            if(!error) fetchPromos();
+        }
+
+        function showToast(msg, bgColor) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.background = bgColor;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+    </script>
+</body>
+</html>
