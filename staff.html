@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Control | Dōmochi CMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --brand-primary: #DF4F53; 
+            --brand-secondary: #FDEEDC; 
+            --text-main: #4A3B32; 
+            --bg-admin: #F8F9FA;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-admin); color: var(--text-main); padding-bottom: 50px; }
+
+        .page-header { background: var(--white); padding: 20px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 20px; }
+        .back-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #eee; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition); color: var(--text-main); text-decoration: none;}
+        .back-btn:hover { background: var(--brand-primary); color: white; }
+
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+
+        /* --- 添加成员表单 --- */
+        #admin-only-section { display: none; } /* 仅限SuperAdmin显示 */
+        .form-card { background: white; border-radius: 24px; padding: 30px; box-shadow: var(--shadow); margin-bottom: 30px; border: 2px solid var(--brand-secondary); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #888; }
+        .form-input { width: 100%; padding: 14px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 1rem; outline: none; }
+        .btn-add { background: var(--brand-primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; width: 100%; }
+
+        /* --- 成员列表 --- */
+        .staff-list { display: flex; flex-direction: column; gap: 15px; }
+        .staff-card { background: white; border-radius: 20px; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
+        
+        .staff-info { display: flex; align-items: center; gap: 15px; }
+        .staff-avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--brand-secondary); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .staff-details h3 { font-size: 1.1rem; font-weight: 800; }
+        .staff-details p { font-size: 0.8rem; color: #aaa; }
+
+        /* 权限胶囊按钮 */
+        .role-capsule { padding: 5px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; cursor: pointer; border: none; transition: 0.2s; }
+        .role-super { background: #feebeb; color: var(--brand-primary); }
+        .role-editor { background: #e6f7ff; color: #1890ff; }
+
+        .staff-actions { display: flex; gap: 10px; }
+        .action-btn { background: #f5f5f5; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; color: #666; font-size: 0.9rem; transition: 0.2s; }
+        .action-btn:hover { background: #eee; color: var(--brand-primary); }
+        .btn-delete { color: #ff4d4f; }
+
+        #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 10px; color: white; font-weight: 600; display: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <header class="page-header">
+        <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1 style="font-size: 1.2rem; font-weight: 800; color: var(--brand-primary);">Staff Management (成员管理)</h1>
+    </header>
+
+    <main class="container">
+        
+        <!-- 添加成员 (仅SuperAdmin可见) -->
+        <section id="admin-only-section" class="form-card">
+            <h2 style="margin-bottom:20px; font-size: 1.1rem;">Aggiungi Nuovo Membro</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="new-username" class="form-input" placeholder="es. marco_domochi">
+                </div>
+                <div class="form-group">
+                    <label>Password Iniziale</label>
+                    <input type="text" id="new-password" class="form-input" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Ruolo (权限)</label>
+                    <select id="new-role" class="form-input">
+                        <option value="editor">Editor (普通员工)</option>
+                        <option value="superadmin">SuperAdmin (超级管理)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-add" onclick="addNewStaff()">CREA ACCOUNT</button>
+        </section>
+
+        <!-- 成员列表 -->
+        <h2 style="margin: 30px 0 15px; font-size: 1.1rem; color: #888;">Tutti i Membri</h2>
+        <div class="staff-list" id="staff-container">
+            <p>Caricamento...</p>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://thulheyvwmfwfhhfjktk.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const currentRole = sessionStorage.getItem('domochi_role');
+        const currentAdminUser = sessionStorage.getItem('domochi_admin');
+
+        window.onload = () => {
+            if (!currentAdminUser) window.location.href = 'index.html';
+            
+            // 如果是超级管理员，显示添加区域
+            if (currentRole === 'superadmin') {
+                document.getElementById('admin-only-section').style.display = 'block';
+            }
+            
+            fetchStaff();
+        };
+
+        // 1. 获取所有成员
+        async function fetchStaff() {
+            const { data, error } = await supabaseClient
+                .from('domochi_admins')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if (data) {
+                const container = document.getElementById('staff-container');
+                container.innerHTML = data.map(member => `
+                    <div class="staff-card">
+                        <div class="staff-info">
+                            <div class="staff-avatar"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="staff-details">
+                                <h3>${member.username} ${member.username === currentAdminUser ? '<small>(Tu)</small>' : ''}</h3>
+                                <button class="role-capsule ${member.role === 'superadmin' ? 'role-super' : 'role-editor'}" 
+                                        onclick="toggleRole(${member.id}, '${member.role}', '${member.username}')">
+                                    ${member.role.toUpperCase()}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="staff-actions">
+                            <button class="action-btn" onclick="changePassword(${member.id}, '${member.username}')">
+                                <i class="fa-solid fa-key"></i> Pass
+                            </button>
+                            ${(currentRole === 'superadmin' && member.username !== 'admin') ? `
+                                <button class="action-btn btn-delete" onclick="deleteStaff(${member.id}, '${member.username}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 2. 添加新成员
+        async function addNewStaff() {
+            const user = document.getElementById('new-username').value.trim();
+            const pass = document.getElementById('new-password').value.trim();
+            const role = document.getElementById('new-role').value;
+
+            if (!user || !pass) return alert("Inserisci tutti i dati!");
+
+            const { error } = await supabaseClient
+                .from('domochi_admins')
+                .insert([{ username: user, password: pass, role: role }]);
+
+            if (error) {
+                alert("Errore: " + error.message);
+            } else {
+                showToast("Membro aggiunto!", "#2E624C");
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+                fetchStaff();
+            }
+        }
+
+        // 3. 修改权限 (仅SuperAdmin)
+        async function toggleRole(id, oldRole, username) {
+            if (currentRole !== 'superadmin') return;
+            if (username === 'admin') return alert("L'account admin principale non può essere modificato.");
+
+            const newRole = oldRole === 'superadmin' ? 'editor' : 'superadmin';
+            if (!confirm(`Cambiare il ruolo di ${username} in ${newRole.toUpperCase()}?`)) return;
+
+            const { error } = await supabaseClient
+                .from('domochi_admins')
+                .update({ role: newRole })
+                .eq('id', id);
+
+            if (!error) fetchStaff();
+        }
+
+        // 4. 修改密码
+        async function changePassword(id, username) {
+            // 普通编辑只能改自己的，超级管理能改所有人的
+            if (currentRole !== 'superadmin' && username !== currentAdminUser) {
+                return alert("Puoi modificare solo la tua password.");
+            }
+
+            const newPass = prompt(`Inserisci la nuova password per ${username}:`);
+            if (!newPass || newPass.length < 4) return alert("Password troppo corta!");
+
+            const { error } = await supabaseClient
+                .from('domochi_admins')
+                .update({ password: newPass })
+                .eq('id', id);
+
+            if (!error) showToast("Password aggiornata!", "#1890ff");
+        }
+
+        // 5. 删除成员
+        async function deleteStaff(id, username) {
+            if (!confirm(`Eliminare definitivamente l'account di ${username}?`)) return;
+
+            const { error } = await supabaseClient
+                .from('domochi_admins')
+                .delete()
+                .eq('id', id);
+
+            if (!error) fetchStaff();
+        }
+
+        function showToast(msg, bgColor) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.background = bgColor;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+    </script>
+</body>
+</html>
