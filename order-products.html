@@ -20,18 +20,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-admin); color: var(--text-main); padding-bottom: 50px; }
 
-        /* --- Header & Layout --- */
         .page-header { background: var(--white); padding: 20px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 20px; }
         .back-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #eee; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition); color: var(--text-main); text-decoration: none;}
         .back-btn:hover { background: var(--brand-primary); color: white; }
         .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
-        /* --- Tabs --- */
         .category-tabs { display: flex; background: white; padding: 8px; border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 30px; gap: 5px; }
         .tab-btn { flex: 1; padding: 15px; border: none; border-radius: 14px; background: transparent; cursor: pointer; font-weight: 700; color: #888; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .tab-btn.active { background: var(--brand-primary); color: white; box-shadow: 0 5px 15px rgba(223, 79, 83, 0.3); }
 
-        /* --- Form Section --- */
         .form-section { background: white; border-radius: 24px; padding: 30px; box-shadow: var(--shadow); margin-bottom: 30px; display: none; border: 2px solid var(--brand-secondary); }
         .form-section.active { display: block; animation: slideDown 0.4s ease; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -41,24 +38,21 @@
         .form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; color: #888; }
         .form-input { width: 100%; padding: 14px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 1rem; outline: none; }
 
-        /* --- 胶囊风格选择器 --- */
         .tag-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
         .capsule-tag { position: relative; cursor: pointer; }
         .capsule-tag input { position: absolute; opacity: 0; cursor: pointer; }
         .capsule-label { display: inline-block; padding: 8px 18px; background: #f0f0f0; color: #666; border-radius: 25px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; border: 1px solid transparent; }
-        
-        /* 选中状态 */
         .capsule-tag input:checked + .capsule-label { background: var(--brand-primary); color: white; transform: scale(1.05); }
         
-        /* 特殊颜色：素食和无麸质 */
         .capsule-tag.diet-vegan input:checked + .capsule-label { background: #52c41a; }
         .capsule-tag.diet-gf input:checked + .capsule-label { background: #1890ff; }
+        .capsule-tag.temp-hot input:checked + .capsule-label { background: #ff4d4f; }
+        .capsule-tag.temp-cold input:checked + .capsule-label { background: #00bcd4; }
 
         .btn-row { grid-column: 1 / -1; display: flex; gap: 15px; margin-top: 30px; }
         .btn-save { background: var(--brand-primary); color: white; border: none; padding: 16px 40px; border-radius: 12px; font-weight: 700; cursor: pointer; flex: 2; }
         .btn-cancel { background: #eee; color: #666; border: none; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; flex: 1; }
 
-        /* --- Product Grid --- */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .product-card { background: white; border-radius: 20px; padding: 15px; display: flex; gap: 15px; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
         .prod-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background: #eee; }
@@ -86,19 +80,17 @@
     </header>
 
     <main class="container">
-        <!-- 分类切换 -->
         <nav class="category-tabs">
             <button class="tab-btn active" onclick="switchCategory('mochi', this)"><i class="fa-solid fa-cookie"></i> MOCHI</button>
             <button class="tab-btn" onclick="switchCategory('drinks', this)"><i class="fa-solid fa-mug-hot"></i> DRINKS</button>
             <button class="tab-btn" onclick="switchCategory('desserts', this)"><i class="fa-solid fa-ice-cream"></i> DESSERTS</button>
         </nav>
 
-        <!-- 编辑/新增表单 -->
         <section class="form-section" id="form-container">
             <h2 id="form-title" style="margin-bottom:20px;">Aggiungi Prodotto</h2>
             <div class="form-grid">
                 <div class="form-group" style="grid-column: 1/-1;">
-                    <label>Immagine</label>
+                    <label>Immagine (没上传默认显示Logo)</label>
                     <input type="file" id="prod-file" class="form-input">
                 </div>
                 <div class="form-group"><label>Nome (IT)</label><input type="text" id="name_it" class="form-input"></div>
@@ -106,7 +98,21 @@
                 <div class="form-group"><label>Prezzo (€)</label><input type="number" id="price" step="0.1" class="form-input"></div>
                 <div class="form-group"><label>Sottocategoria</label><select id="subcategory" class="form-input"></select></div>
                 
-                <!-- 特殊标签 (Vegano / Gluten Free) -->
+                <!-- 饮料专用的冷热选项 -->
+                <div class="form-group" id="drink-temp-group" style="display:none; grid-column: 1/-1;">
+                    <label>Opzioni Temperatura (冷热选项)</label>
+                    <div class="tag-group">
+                        <label class="capsule-tag temp-hot">
+                            <input type="checkbox" id="tag-hot">
+                            <span class="capsule-label">🔴 Caldo (Hot)</span>
+                        </label>
+                        <label class="capsule-tag temp-cold">
+                            <input type="checkbox" id="tag-cold">
+                            <span class="capsule-label">🔵 Freddo (Cold)</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="form-group" style="grid-column: 1/-1;">
                     <label>Tags Dietetici (饮食标签)</label>
                     <div class="tag-group">
@@ -121,16 +127,13 @@
                     </div>
                 </div>
 
-                <!-- 14种过敏原胶囊 -->
                 <div class="form-group" style="grid-column: 1/-1;">
-                    <label>Allergeni (过敏原 - 请勾选含有的项目)</label>
-                    <div class="tag-group" id="allergen-list">
-                        <!-- 动态生成胶囊 -->
-                    </div>
+                    <label>Allergeni (过敏原)</label>
+                    <div class="tag-group" id="allergen-list"></div>
                 </div>
             </div>
             <div class="btn-row">
-                <button class="btn-save" onclick="saveProduct()">SALVA</button>
+                <button class="btn-save" id="btn-save-text" onclick="saveProduct()">SALVA</button>
                 <button class="btn-cancel" onclick="toggleForm(false)">ANNULLA</button>
             </div>
         </section>
@@ -146,15 +149,12 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        const DEFAULT_LOGO = "https://i.ibb.co/gMcnX8yj/IMG-0668.jpg"; // 默认Logo链接
+
         let currentCategory = 'mochi';
         let currentEditId = null;
 
-        const allergens = [
-            "Glutine", "Crostacei", "Uova", "Pesce", "Arachidi", "Soia", 
-            "Latte", "Frutta a guscio", "Sedano", "Senape", "Sesamo", 
-            "Solfiti", "Lupini", "Molluschi"
-        ];
-
+        const allergens = ["Glutine", "Crostacei", "Uova", "Pesce", "Arachidi", "Soia", "Latte", "Frutta a guscio", "Sedano", "Senape", "Sesamo", "Solfiti", "Lupini", "Molluschi"];
         const subCats = {
             mochi: ['Classic', 'Special', 'Box Set'],
             drinks: ['Milk Tea', 'Fruit Tea', 'Coffee', 'Frappuccino'],
@@ -169,18 +169,17 @@
 
         function renderAllergenCapsules() {
             const container = document.getElementById('allergen-list');
-            container.innerHTML = allergens.map(a => `
-                <label class="capsule-tag">
-                    <input type="checkbox" class="allergen-checkbox" value="${a}">
-                    <span class="capsule-label">${a}</span>
-                </label>
-            `).join('');
+            container.innerHTML = allergens.map(a => `<label class="capsule-tag"><input type="checkbox" class="allergen-checkbox" value="${a}"><span class="capsule-label">${a}</span></label>`).join('');
         }
 
         function switchCategory(cat, btn) {
             currentCategory = cat;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            
+            // 如果是饮料，显示冷热选项
+            document.getElementById('drink-temp-group').style.display = (cat === 'drinks') ? 'block' : 'none';
+            
             updateSubOptions();
             fetchProducts();
         }
@@ -192,21 +191,25 @@
 
         function toggleForm(show) {
             document.getElementById('form-container').classList.toggle('active', show);
-            if(!show) {
-                currentEditId = null;
-                document.getElementById('form-title').innerText = "Aggiungi Prodotto";
-                document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-            }
+            if(!show) resetForm();
+        }
+
+        function resetForm() {
+            currentEditId = null;
+            document.getElementById('form-title').innerText = "Aggiungi Prodotto";
+            document.getElementById('name_it').value = '';
+            document.getElementById('name_en').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('prod-file').value = '';
+            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
         }
 
         async function fetchProducts() {
-            const { data } = await supabaseClient.from('domochi_products')
-                .select('*').eq('category', currentCategory).order('id', { ascending: false });
-            
+            const { data } = await supabaseClient.from('domochi_products').select('*').eq('category', currentCategory).order('id', { ascending: false });
             const list = document.getElementById('product-list');
             list.innerHTML = data.map(p => `
                 <div class="product-card">
-                    <img src="${p.image_url || ''}" class="prod-img">
+                    <img src="${p.image_url || DEFAULT_LOGO}" class="prod-img">
                     <div class="prod-info">
                         <h3>${p.name_it}</h3>
                         <p class="price">€ ${parseFloat(p.price).toFixed(2)}</p>
@@ -224,6 +227,10 @@
         }
 
         async function saveProduct() {
+            const btn = document.getElementById('btn-save-text');
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
             const checkedAllergens = Array.from(document.querySelectorAll('.allergen-checkbox:checked')).map(c => c.value);
             
             const productData = {
@@ -234,38 +241,61 @@
                 category: currentCategory,
                 is_vegan: document.getElementById('tag-vegan').checked,
                 is_gluten_free: document.getElementById('tag-gf').checked,
+                is_hot: document.getElementById('tag-hot').checked,
+                is_cold: document.getElementById('tag-cold').checked,
                 allergens: checkedAllergens.join(','),
                 is_available: true
             };
 
-            const file = document.getElementById('prod-file').files[0];
-            if(file) {
-                const path = `prod_${Date.now()}`;
-                await supabaseClient.storage.from('domochi-assets').upload(path, file);
-                productData.image_url = supabaseClient.storage.from('domochi-assets').getPublicUrl(path).data.publicUrl;
-            }
+            try {
+                const file = document.getElementById('prod-file').files[0];
+                if(file) {
+                    const path = `prod_${Date.now()}`;
+                    const upload = await supabaseClient.storage.from('domochi-assets').upload(path, file);
+                    if(upload.error) throw upload.error;
+                    productData.image_url = supabaseClient.storage.from('domochi-assets').getPublicUrl(path).data.publicUrl;
+                } else if (!currentEditId) {
+                    // 新增产品且没传图，用默认Logo
+                    productData.image_url = DEFAULT_LOGO;
+                }
 
-            if(currentEditId) {
-                await supabaseClient.from('domochi_products').update(productData).eq('id', currentEditId);
-            } else {
-                await supabaseClient.from('domochi_products').insert([productData]);
+                let result;
+                if(currentEditId) {
+                    result = await supabaseClient.from('domochi_products').update(productData).eq('id', currentEditId);
+                } else {
+                    result = await supabaseClient.from('domochi_products').insert([productData]);
+                }
+
+                if(result.error) throw result.error;
+
+                alert("Salvato con successo!");
+                resetForm();
+                toggleForm(false); 
+                fetchProducts();
+            } catch (err) {
+                console.error(err);
+                alert("Errore: " + err.message);
+            } finally {
+                btn.innerText = "SALVA";
+                btn.disabled = false;
             }
-            toggleForm(false); fetchProducts();
         }
 
         function editProduct(p) {
             currentEditId = p.id;
             document.getElementById('name_it').value = p.name_it;
+            document.getElementById('name_en').value = p.name_en || '';
             document.getElementById('price').value = p.price;
-            document.getElementById('tag-vegan').checked = p.is_vegan;
-            document.getElementById('tag-gf').checked = p.is_gluten_free;
+            document.getElementById('subcategory').value = p.subcategory;
+            document.getElementById('tag-vegan').checked = p.is_vegan || false;
+            document.getElementById('tag-gf').checked = p.is_gluten_free || false;
+            document.getElementById('tag-hot').checked = p.is_hot || false;
+            document.getElementById('tag-cold').checked = p.is_cold || false;
             
-            // 填充过敏原
             const pAllergens = p.allergens ? p.allergens.split(',') : [];
-            document.querySelectorAll('.allergen-checkbox').forEach(cb => {
-                cb.checked = pAllergens.includes(cb.value);
-            });
+            document.querySelectorAll('.allergen-checkbox').forEach(cb => cb.checked = pAllergens.includes(cb.value));
 
+            document.getElementById('form-title').innerText = "Modifica: " + p.name_it;
             toggleForm(true);
             window.scrollTo(0,0);
         }
