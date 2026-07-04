@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Info | Dōmochi CMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --brand-primary: #DF4F53; 
+            --brand-secondary: #FDEEDC; 
+            --text-main: #4A3B32; 
+            --bg-admin: #F8F9FA;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-admin); color: var(--text-main); padding-bottom: 100px; }
+
+        /* --- Header --- */
+        .page-header { background: var(--white); padding: 20px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 20px; }
+        .back-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #eee; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition); color: var(--text-main); text-decoration: none;}
+        .back-btn:hover { background: var(--brand-primary); color: white; }
+        .page-title h1 { font-size: 1.3rem; font-weight: 800; color: var(--brand-primary); }
+
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+
+        /* --- 表单卡片 --- */
+        .info-card { background: var(--white); padding: 30px; border-radius: 24px; box-shadow: var(--shadow); margin-bottom: 25px; border: 1px solid rgba(0,0,0,0.02); }
+        .card-title { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--brand-secondary); padding-bottom: 10px; }
+        .card-title i { color: var(--brand-primary); font-size: 1.4rem; }
+        .card-title h2 { font-size: 1.1rem; font-weight: 800; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #888; }
+        .form-input { width: 100%; padding: 14px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 1rem; outline: none; transition: var(--transition); background: #fafafa; }
+        .form-input:focus { border-color: var(--brand-primary); background: white; }
+        textarea.form-input { min-height: 100px; resize: vertical; }
+
+        /* --- 底部保存栏 --- */
+        .action-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); display: flex; justify-content: center; z-index: 100; }
+        .save-btn { background: var(--brand-primary); color: white; border: none; padding: 16px 60px; border-radius: 15px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 10px; }
+        .save-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(223, 79, 83, 0.3); }
+        .save-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 提示框 */
+        #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 10px; color: white; font-weight: 600; display: none; z-index: 1000; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <header class="page-header">
+        <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title">
+            <h1>Base Info Management</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- 营业时间设置 -->
+        <section class="info-card">
+            <div class="card-title">
+                <i class="fa-regular fa-clock"></i>
+                <h2>Orari di apertura (营业时间)</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Descrizione Orari (Italiano)</label>
+                    <textarea id="hours_it" class="form-input" placeholder="es. Lunedì - Giovedì: 10:00 - 23:00..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Hours Description (English)</label>
+                    <textarea id="hours_en" class="form-input" placeholder="e.g. Monday - Thursday: 10:00 - 23:00..."></textarea>
+                </div>
+            </div>
+            <p style="font-size: 0.75rem; color: #aaa;">* 使用回车键换行，每行将显示在网页的不同位置。</p>
+        </section>
+
+        <!-- 页脚/公告设置 -->
+        <section class="info-card">
+            <div class="card-title">
+                <i class="fa-solid fa-bullhorn"></i>
+                <h2>Annuncio & Notice (页脚公告)</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Messaggio Footer (IT)</label>
+                    <input type="text" id="footer_it" class="form-input" placeholder="es. Vi aspettiamo in negozio!">
+                </div>
+                <div class="form-group">
+                    <label>Footer Message (EN)</label>
+                    <input type="text" id="footer_en" class="form-input" placeholder="e.g. We are waiting for you!">
+                </div>
+            </div>
+        </section>
+
+        <!-- 联系方式与地址 -->
+        <section class="info-card">
+            <div class="card-title">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <h2>Contatti (联系方式与地址)</h2>
+            </div>
+            <div class="form-group">
+                <label>Indirizzo (地址)</label>
+                <input type="text" id="contact_addr" class="form-input" placeholder="es. Via Paolo Sarpi 26, Milano">
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Telefono (电话)</label>
+                    <input type="text" id="contact_tel" class="form-input" placeholder="+39 0236507051">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="contact_email" class="form-input" placeholder="domochi@example.com">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="action-bar">
+        <button class="save-btn" id="save-btn" onclick="saveSettings()">
+            <i class="fa-solid fa-cloud-arrow-up"></i> SALVA MODIFICHE (保存修改)
+        </button>
+    </div>
+
+    <!-- 引入 Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://thulheyvwmfwfhhfjktk.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodWxoZXl2d21md2ZoaGZqa3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODMyNzYsImV4cCI6MjA5ODU1OTI3Nn0.cX2-vmJ8TdXvUN-fjx6ufW1fUgklG4kZXsQhdwlHeTQ";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 1. 安全检查：未登录踢回 index.html
+        const adminUser = sessionStorage.getItem('domochi_admin');
+        if (!adminUser) {
+            window.location.href = 'index.html';
+        }
+
+        // 2. 页面加载初始化
+        window.onload = () => {
+            loadCurrentSettings();
+        };
+
+        // 3. 从数据库加载现有设置
+        async function loadCurrentSettings() {
+            try {
+                const { data, error } = await supabaseClient.from('domochi_settings').select('*');
+                if (error) throw error;
+
+                if (data) {
+                    data.forEach(item => {
+                        switch(item.setting_key) {
+                            case 'custom_hours':
+                                document.getElementById('hours_it').value = item.value_it || '';
+                                document.getElementById('hours_en').value = item.value_en || '';
+                                break;
+                            case 'footer_notice':
+                                document.getElementById('footer_it').value = item.value_it || '';
+                                document.getElementById('footer_en').value = item.value_en || '';
+                                break;
+                            case 'contact_addr':
+                                document.getElementById('contact_addr').value = item.value_it || '';
+                                break;
+                            case 'contact_tel':
+                                document.getElementById('contact_tel').value = item.value_it || '';
+                                break;
+                            case 'contact_email':
+                                document.getElementById('contact_email').value = item.value_it || '';
+                                break;
+                        }
+                    });
+                }
+            } catch (err) {
+                showToast("Errore nel caricamento dati", "#ff4d4f");
+            }
+        }
+
+        // 4. 保存设置到数据库
+        async function saveSettings() {
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SALVATAGGIO...';
+
+            const settings = [
+                { 
+                    setting_key: 'custom_hours', 
+                    value_it: document.getElementById('hours_it').value, 
+                    value_en: document.getElementById('hours_en').value 
+                },
+                { 
+                    setting_key: 'footer_notice', 
+                    value_it: document.getElementById('footer_it').value, 
+                    value_en: document.getElementById('footer_en').value 
+                },
+                { 
+                    setting_key: 'contact_addr', 
+                    value_it: document.getElementById('contact_addr').value,
+                    value_en: document.getElementById('contact_addr').value
+                },
+                { 
+                    setting_key: 'contact_tel', 
+                    value_it: document.getElementById('contact_tel').value,
+                    value_en: document.getElementById('contact_tel').value
+                },
+                { 
+                    setting_key: 'contact_email', 
+                    value_it: document.getElementById('contact_email').value,
+                    value_en: document.getElementById('contact_email').value
+                }
+            ];
+
+            try {
+                // 使用 upsert 批量更新或插入
+                const { error } = await supabaseClient
+                    .from('domochi_settings')
+                    .upsert(settings, { onConflict: 'setting_key' });
+
+                if (error) throw error;
+                showToast("Modifiche salvate con successo!", "#2E624C");
+            } catch (err) {
+                showToast("Errore nel salvataggio: " + err.message, "#ff4d4f");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> SALVA MODIFICHE (保存修改)';
+            }
+        }
+
+        function showToast(msg, bgColor) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.background = bgColor;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
